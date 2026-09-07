@@ -4,3 +4,6 @@ export interface InvalidLoginCase {
   password: string;
   expectedError: string;
 }
+export interface ProductSearchCase {
+  searchTerm: string;
+}
