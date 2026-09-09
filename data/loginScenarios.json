@@ -1,0 +1,10 @@
+[
+    {
+        "case": "incorrect_password",
+        "source": "validEmailWrongPassword"
+    },
+    {
+        "case": "nonexistent_account",
+        "source": "randomAccount"
+    }
+]

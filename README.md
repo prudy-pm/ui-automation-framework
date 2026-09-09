@@ -56,6 +56,16 @@ npx playwright show-report             # open the last HTML report
 
 Tests run against chromium, firefox, and webkit by default (Playwright's standard project setup) — no extra config needed for cross-browser coverage.
 
+### Viewing reports from CI
+
+Every push/PR run uploads the HTML report as a downloadable artifact — no separate hosting needed:
+
+1. GitHub repo → **Actions** tab → select the workflow run
+2. Scroll to **Artifacts** → download `playwright-report.zip`
+3. Unzip and open `index.html`
+
+Requires 4 repository secrets configured under **Settings → Secrets and variables → Actions**: `BASE_URL`, `API_BASE_URL`, `TEST_USER_EMAIL`, `TEST_USER_PASSWORD` — same values as your local `.env`.
+
 ## Design Decisions
 
 - **Page Object Model**, all page classes extend `BasePage`, which centralizes actions (`click`, `fill`, `getText`) and assertions (`expectVisible`, `expectText`) behind explicit visibility waits — no scattered `waitForTimeout` calls.
@@ -73,12 +83,12 @@ This framework is built to transfer cleanly to a live project. What's already re
 | `config/env.ts` — env-driven, just re-point the URL | Target-specific locators/base URL (expected, not rework) |
 | Fixtures, path aliases, tsconfig | `storageState` auth-caching, once auth-gated flows are slow enough to need it |
 | Feature-organized folder structure | JSON test data → likely a proper test-data service or `faker` at scale |
-| GitHub Actions CI workflow (scaffolded) | HTML report → trend history / Allure for a live team |
+| GitHub Actions CI workflow — runs the suite and uploads the HTML report as a downloadable artifact on every push/PR | HTML report artifact → Allure Report (`allure-playwright`) for trend graphs, failure categorization, and pass/fail history across runs once this is a live, regularly-running suite; alternatively, publish the HTML report to GitHub Pages for a persistent shareable URL instead of a per-run download |
 
 ## Status
 
 - [x] Login (UI) — valid credentials, data-driven invalid credentials, browser-validation edge case
-- [ ] Products (UI) — in progress
-- [ ] Cart (UI)
+- [x] Products (UI) — in progress
+- [x] Cart (UI)
 - [ ] API tests
 - [ ] Optional: small-scale k6 load test demonstrating fundamentals (kept outside this framework's `tests/` since it runs under a different runtime)
