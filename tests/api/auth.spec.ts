@@ -5,10 +5,7 @@ import accountProfiles from '@data/accountProfiles.json';
 import { AccountProfile } from '@data/types';
 import { NewAccountDetails } from '@api/AccountApiClient';
 
-// AutomationExercise's createAccount endpoint expects a flat set of form
-// fields. Our test data models a realistic, nested profile shape instead --
-// this function is the deliberate boundary between "how we organize test
-// data" and "what the API's wire format actually requires."
+
 function toApiPayload(profile: AccountProfile, email: string, password: string): NewAccountDetails {
   return {
     name: `${profile.personalInfo.firstname} ${profile.personalInfo.lastname}`,
@@ -42,6 +39,16 @@ test.describe('Account API', () => {
     const response = await accountApi.verifyLogin('no.such.account@example.com', 'WrongPassword123!');
     const body = await response.json();
     expect(body.responseCode).toBe(404);
+  });
+
+  test('createAccount rejects an email that already exists @regression', async ({ accountApi }) => {
+    const [profile] = accountProfiles as AccountProfile[];
+    const response = await accountApi.createAccount(
+      toApiPayload(profile, env.testUser.email, generateRandomPassword())
+    );
+    const body = await response.json();
+    expect(body.responseCode).toBe(400);
+    expect(body.message).toBe('Email already exists!');
   });
 
   (accountProfiles as AccountProfile[]).forEach((profile) => {
