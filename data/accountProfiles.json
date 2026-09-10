@@ -1,0 +1,25 @@
+[
+    {
+        "profile": "standard_sa_user",
+        "personalInfo": {
+            "title": "Mr",
+            "firstname": "API",
+            "lastname": "Tester",
+            "birthDate": {
+                "day": "1",
+                "month": "1",
+                "year": "1990"
+            }
+        },
+        "address": {
+            "company": "Test Co",
+            "address1": "123 Test Street",
+            "address2": "",
+            "country": "South Africa",
+            "state": "Gauteng",
+            "city": "Pretoria",
+            "zipcode": "0001"
+        },
+        "mobileNumber": "0000000000"
+    }
+]
