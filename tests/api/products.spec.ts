@@ -18,5 +18,5 @@ test.describe('Products API', () => {
     const body = await response.json();
     expect(body.responseCode).toBe(200);
     expect(body.products.length).toBeGreaterThan(0);
-  });
+  }); 
 });
