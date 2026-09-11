@@ -31,3 +31,13 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 30
+      - name: Notify Teams on failure
+        if: failure()
+        run: |
+          curl -H "Content-Type: application/json" -d '{
+            "@type": "MessageCard",
+            "@context": "http://schema.org/extensions",
+            "summary": "Playwright CI failed",
+            "title": "Playwright tests failed",
+            "text": "Repository: ${{ github.repository }} (branch: ${{ github.ref_name }}). View the run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          }' "${{ secrets.TEAMS_WEBHOOK_URL }}"
