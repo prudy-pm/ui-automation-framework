@@ -31,6 +31,14 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 30
+          
+      # Allure's HTML report needs to be served over real HTTP
+      # -- opening index.html directly from a downloaded zip fails (browsers block the background fetch() calls the report makes from a file:// path). 
+      # On GitHub Actions there's no native "embed as a tab" mechanism, so we generate + upload it as a downloadable artifact; viewing it requires
+      # `npx allure open <extracted-folder>` (see README).
+      # On Azure DevOps, the official `PublishAllureReport@2` task solves this natively by embedding the report as its own pipeline tab -- no download or CLI
+      # needed for anyone viewing it.
+      
       - name: Generate Allure Report
         if: ${{ !cancelled() }}
         run: npx allure generate allure-results --clean -o allure-report
