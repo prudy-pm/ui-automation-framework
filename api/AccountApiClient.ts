@@ -20,6 +20,32 @@ export type NewAccountDetails = {
   mobile_number: string;
 };
 
+// Field names here (first_name, last_name, birth_day) intentionally differ
+// from NewAccountDetails' input names (firstname, lastname, birth_date) --
+// confirmed via a real API call, not assumed. AutomationExercise's own API
+// is inconsistent between what it accepts and what it returns.
+export type UserDetailResponse = {
+  responseCode: number;
+  user: {
+    id: number;
+    name: string;
+    email: string;
+    title: string;
+    birth_day: string;
+    birth_month: string;
+    birth_year: string;
+    first_name: string;
+    last_name: string;
+    company: string;
+    address1: string;
+    address2: string;
+    country: string;
+    state: string;
+    city: string;
+    zipcode: string;
+  };
+};
+
 export class AccountApiClient extends BaseApiClient {
   async verifyLogin(email: string, password: string) {
     return this.post('verifyLogin', { email, password });
@@ -31,5 +57,13 @@ export class AccountApiClient extends BaseApiClient {
 
   async deleteAccount(email: string, password: string) {
     return this.delete('deleteAccount', { email, password });
+  }
+
+  async updateAccount(details: NewAccountDetails) {
+    return this.put('updateAccount', details);
+  }
+
+  async getUserDetailByEmail(email: string) {
+    return this.get(`getUserDetailByEmail?email=${email}`);
   }
 }

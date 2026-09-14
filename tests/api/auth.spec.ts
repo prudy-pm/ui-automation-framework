@@ -5,7 +5,6 @@ import accountProfiles from '@data/accountProfiles.json';
 import { AccountProfile } from '@data/types';
 import { NewAccountDetails } from '@api/AccountApiClient';
 
-
 function toApiPayload(profile: AccountProfile, email: string, password: string): NewAccountDetails {
   return {
     name: `${profile.personalInfo.firstname} ${profile.personalInfo.lastname}`,
@@ -51,18 +50,50 @@ test.describe('Account API', () => {
     expect(body.message).toBe('Email already exists!');
   });
 
+  // Confirmed via a real exploratory call: updateAccount only accepts PUT.
+  // POST returns a 405 with this exact message -- a real, observed API
+  // contract detail, not a guess about how REST "should" behave.
+  test('updateAccount rejects the wrong HTTP method @regression', async ({ accountApi }) => {
+    const response = await accountApi.post('updateAccount', { email: env.testUser.email });
+    expect(response.status()).toBe(405);
+    const body = await response.json();
+    expect(body.detail).toBe('Method "POST" not allowed.');
+  });
+
   (accountProfiles as AccountProfile[]).forEach((profile) => {
-    test(`account lifecycle: create then delete a ${profile.profile} @regression`, async ({ accountApi }) => {
+    // Full resource lifecycle: create it, read it back to confirm the data
+    // persisted correctly, update one field, read again to confirm the
+    // update actually took effect, then delete. Each step's assertion
+    // depends on the real state left by the step before it -- this is
+    // deliberately stateful, unlike the earlier standalone tests above.
+    test(`account lifecycle: create, verify, update, verify, delete a ${profile.profile} @regression`, async ({
+      accountApi,
+    }) => {
       const email = generateUniqueEmail();
       const password = generateRandomPassword();
 
       const createResponse = await accountApi.createAccount(toApiPayload(profile, email, password));
-      const createBody = await createResponse.json();
-      expect(createBody.responseCode).toBe(201);
+      expect((await createResponse.json()).responseCode).toBe(201);
+
+      const afterCreate = await (await accountApi.getUserDetailByEmail(email)).json();
+      expect(afterCreate.responseCode).toBe(200);
+      expect(afterCreate.user.first_name).toBe(profile.personalInfo.firstname);
+      expect(afterCreate.user.last_name).toBe(profile.personalInfo.lastname);
+
+      const updatedFirstName = 'Updated';
+      const updateResponse = await accountApi.updateAccount({
+        ...toApiPayload(profile, email, password),
+        firstname: updatedFirstName,
+      });
+      const updateBody = await updateResponse.json();
+      expect(updateBody.responseCode).toBe(200);
+      expect(updateBody.message).toBe('User updated!');
+
+      const afterUpdate = await (await accountApi.getUserDetailByEmail(email)).json();
+      expect(afterUpdate.user.first_name).toBe(updatedFirstName);
 
       const deleteResponse = await accountApi.deleteAccount(email, password);
-      const deleteBody = await deleteResponse.json();
-      expect(deleteBody.responseCode).toBe(200);
+      expect((await deleteResponse.json()).responseCode).toBe(200);
     });
   });
 });
