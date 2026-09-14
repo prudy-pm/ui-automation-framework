@@ -2,13 +2,13 @@ import { test as base } from '@playwright/test';
 import { LoginPage } from '@pages/LoginPage';
 import { ProductsPage } from '@pages/ProductsPage';
 import { CartPage } from '@pages/CartPage';
-
-
+import { FooterComponent } from '@pages/FooterComponent';
 
 type PageFixtures = {
   loginPage: LoginPage;
   productsPage: ProductsPage;
   cartPage: CartPage;
+  footer: FooterComponent;
 };
 
 const AD_URL_PATTERNS = [
@@ -20,10 +20,7 @@ const AD_URL_PATTERNS = [
 ];
 
 export const test = base.extend<PageFixtures>({
-  // Overrides Playwright's built-in `page` fixture so every test gets this
-  // automatically -- AutomationExercise runs live Google ads that load
-  // asynchronously and physically overlap page content, causing real
-  // click-interception failures unrelated to our own locators or logic.
+ 
   page: async ({ page }, use) => {
     await page.route('**/*', (route) => {
       const url = route.request().url();
@@ -43,6 +40,9 @@ export const test = base.extend<PageFixtures>({
   },
   cartPage: async ({ page }, use) => {
     await use(new CartPage(page));
+  },
+  footer: async ({ page }, use) => {
+    await use(new FooterComponent(page));
   },
 });
 
