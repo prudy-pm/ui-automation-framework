@@ -47,4 +47,8 @@ export class BasePage {
         const isValid = await locator.evaluate((el: HTMLInputElement) => el.checkValidity());
         expect(isValid).toBe(false);
     }
+
+    async expectHidden(locator: Locator): Promise<void> {
+        await expect(locator).toHaveCount(0);
+    }
 }

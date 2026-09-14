@@ -1,9 +1,11 @@
 import { test } from '@fixtures/pageFixtures';
-import productSearchCases from '@data/products.json';
+import { readExcelSheet } from '@utils/excelData';
 import { ProductSearchCase } from '@data/types';
 
+const productSearchCases = readExcelSheet<ProductSearchCase>('data/productSearchTerms.xlsx');
+
 test.describe('Product Search', () => {
-  (productSearchCases as ProductSearchCase[]).forEach((data) => {
+  productSearchCases.forEach((data) => {
     test(`search returns results for "${data.searchTerm}" @regression`, async ({ productsPage }) => {
       await productsPage.goto('/products');
       await productsPage.searchProduct(data.searchTerm);

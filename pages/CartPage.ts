@@ -28,4 +28,13 @@ export class CartPage extends BasePage {
     const row = this.getRowByProductName(productName);
     await this.expectVisible(row.locator('.cart_total_price', { hasText: total }));
   }
+
+  async removeProduct(productName: string): Promise<void> {
+    const row = this.getRowByProductName(productName);
+    await this.click(row.locator('.cart_quantity_delete'));
+  }
+
+  async expectProductRemoved(productName: string): Promise<void> {
+    await this.expectHidden(this.getRowByProductName(productName));
+  }
 }

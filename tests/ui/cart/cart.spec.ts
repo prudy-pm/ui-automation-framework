@@ -12,4 +12,18 @@ test.describe('Cart', () => {
     await cartPage.expectProductInCart('Blue Top');
     await cartPage.expectProductTotal('Blue Top', 'Rs. 500');
   });
+
+  test('user can remove a product from the cart @regression', async ({ productsPage, cartPage }) => {
+    await productsPage.goto('/products');
+    await productsPage.searchProduct('top');
+    await productsPage.expectResultsVisible();
+    await productsPage.addFirstResultToCart();
+    await productsPage.goToCartFromModal();
+
+    await cartPage.expectCartPageLoaded();
+    await cartPage.expectProductInCart('Blue Top');
+
+    await cartPage.removeProduct('Blue Top');
+    await cartPage.expectProductRemoved('Blue Top');
+  });
 });

@@ -114,5 +114,4 @@ This framework is built to transfer cleanly to a live project. What's already re
 - [x] API tests — products, account lifecycle (nested data), layered login/signup validation
 - [x] CI pipeline — secrets, cross-browser matrix, job summary, Teams failure alert
 - [x] Two report tools compared and running (Playwright HTML + Allure)
-- [ ] Optional: small-scale k6 load test demonstrating fundamentals (kept outside this framework's `tests/` since it runs under a different runtime)
 - [ ] Optional: Excel-based test data import
