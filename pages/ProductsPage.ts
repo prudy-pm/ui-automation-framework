@@ -7,13 +7,14 @@ export class ProductsPage extends BasePage {
   private readonly searchInput = this.page.getByRole('textbox', { name: 'Search Product' });
   private readonly searchButton = this.page.locator('#submit_search');
   private readonly searchResultsHeading = this.page.getByText('Searched Products', { exact: false });
+  private readonly viewProductLinks = this.page.getByRole('link', { name: /View Product/ });
 
   // Each product card renders two "Add to cart" matches in the DOM (confirmed via codegen);
   // the second match per card is the always-visible, clickable button.
 
-//  private readonly firstAddToCartLink = this.page.getByText('Add to cart').first();
+  //  private readonly firstAddToCartLink = this.page.getByText('Add to cart').first();
 
- private readonly firstAddToCartLink = this.page.locator('.productinfo a.add-to-cart').first();
+  private readonly firstAddToCartLink = this.page.locator('.productinfo a.add-to-cart').first();
 
   private readonly continueShoppingButton = this.page.getByRole('button', { name: 'Continue Shopping' });
   private readonly viewCartLink = this.page.getByRole('link', { name: 'View Cart' });
@@ -46,5 +47,9 @@ export class ProductsPage extends BasePage {
 
   async goToCartFromModal(): Promise<void> {
     await this.click(this.viewCartLink);
+  }
+
+  async viewProductAt(index: number): Promise<void> {
+    await this.click(this.viewProductLinks.nth(index));
   }
 }

@@ -37,4 +37,9 @@ export class CartPage extends BasePage {
   async expectProductRemoved(productName: string): Promise<void> {
     await this.expectHidden(this.getRowByProductName(productName));
   }
+
+  async expectProductQuantity(productName: string, quantity: number): Promise<void> {
+    const row = this.getRowByProductName(productName);
+    await this.expectVisible(row.getByRole('cell', { name: quantity.toString(), exact: true }));
+  }
 }

@@ -3,12 +3,14 @@ import { LoginPage } from '@pages/LoginPage';
 import { ProductsPage } from '@pages/ProductsPage';
 import { CartPage } from '@pages/CartPage';
 import { FooterComponent } from '@pages/FooterComponent';
+import { ProductDetailPage } from '@pages/ProductDetailPage';
 
 type PageFixtures = {
   loginPage: LoginPage;
   productsPage: ProductsPage;
   cartPage: CartPage;
   footer: FooterComponent;
+  productDetailPage: ProductDetailPage;
 };
 
 const AD_URL_PATTERNS = [
@@ -43,6 +45,10 @@ export const test = base.extend<PageFixtures>({
   },
   footer: async ({ page }, use) => {
     await use(new FooterComponent(page));
+  },
+
+   productDetailPage: async ({ page }, use) => {
+    await use(new ProductDetailPage(page));
   },
 });
 

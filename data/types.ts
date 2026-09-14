@@ -37,3 +37,7 @@ export interface AccountProfile {
   address: Address;
   mobileNumber: string;
 }
+
+export type ProductQuantityCase = {
+  quantity: number;
+};
