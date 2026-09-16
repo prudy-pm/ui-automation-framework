@@ -1,31 +1,9 @@
 import { test, expect } from '@fixtures/apiFixtures';
 import { env } from '@config/env';
 import { generateUniqueEmail, generateRandomPassword } from '@utils/helpers';
+import { toApiPayload } from '@utils/accountFactory';
 import accountProfiles from '@data/accountProfiles.json';
 import { AccountProfile } from '@data/types';
-import { NewAccountDetails } from '@api/AccountApiClient';
-
-function toApiPayload(profile: AccountProfile, email: string, password: string): NewAccountDetails {
-  return {
-    name: `${profile.personalInfo.firstname} ${profile.personalInfo.lastname}`,
-    email,
-    password,
-    title: profile.personalInfo.title,
-    birth_date: profile.personalInfo.birthDate.day,
-    birth_month: profile.personalInfo.birthDate.month,
-    birth_year: profile.personalInfo.birthDate.year,
-    firstname: profile.personalInfo.firstname,
-    lastname: profile.personalInfo.lastname,
-    company: profile.address.company,
-    address1: profile.address.address1,
-    address2: profile.address.address2,
-    country: profile.address.country,
-    zipcode: profile.address.zipcode,
-    state: profile.address.state,
-    city: profile.address.city,
-    mobile_number: profile.mobileNumber,
-  };
-}
 
 test.describe('Account API', () => {
   test('verifyLogin succeeds for the existing test account @smoke', async ({ accountApi }) => {
@@ -72,28 +50,33 @@ test.describe('Account API', () => {
       const email = generateUniqueEmail();
       const password = generateRandomPassword();
 
-      const createResponse = await accountApi.createAccount(toApiPayload(profile, email, password));
-      expect((await createResponse.json()).responseCode).toBe(201);
+      // create/verify/update/verify in `try`, delete in `finally`: a failed
+      // assertion partway through must not leak the account on the real
+      // automationexercise.com site with no bulk-delete tool to clean it up.
+      try {
+        const createResponse = await accountApi.createAccount(toApiPayload(profile, email, password));
+        expect((await createResponse.json()).responseCode).toBe(201);
 
-      const afterCreate = await (await accountApi.getUserDetailByEmail(email)).json();
-      expect(afterCreate.responseCode).toBe(200);
-      expect(afterCreate.user.first_name).toBe(profile.personalInfo.firstname);
-      expect(afterCreate.user.last_name).toBe(profile.personalInfo.lastname);
+        const afterCreate = await (await accountApi.getUserDetailByEmail(email)).json();
+        expect(afterCreate.responseCode).toBe(200);
+        expect(afterCreate.user.first_name).toBe(profile.personalInfo.firstname);
+        expect(afterCreate.user.last_name).toBe(profile.personalInfo.lastname);
 
-      const updatedFirstName = 'Updated';
-      const updateResponse = await accountApi.updateAccount({
-        ...toApiPayload(profile, email, password),
-        firstname: updatedFirstName,
-      });
-      const updateBody = await updateResponse.json();
-      expect(updateBody.responseCode).toBe(200);
-      expect(updateBody.message).toBe('User updated!');
+        const updatedFirstName = 'Updated';
+        const updateResponse = await accountApi.updateAccount({
+          ...toApiPayload(profile, email, password),
+          firstname: updatedFirstName,
+        });
+        const updateBody = await updateResponse.json();
+        expect(updateBody.responseCode).toBe(200);
+        expect(updateBody.message).toBe('User updated!');
 
-      const afterUpdate = await (await accountApi.getUserDetailByEmail(email)).json();
-      expect(afterUpdate.user.first_name).toBe(updatedFirstName);
-
-      const deleteResponse = await accountApi.deleteAccount(email, password);
-      expect((await deleteResponse.json()).responseCode).toBe(200);
+        const afterUpdate = await (await accountApi.getUserDetailByEmail(email)).json();
+        expect(afterUpdate.user.first_name).toBe(updatedFirstName);
+      } finally {
+        const deleteResponse = await accountApi.deleteAccount(email, password);
+        expect((await deleteResponse.json()).responseCode).toBe(200);
+      }
     });
   });
 });

@@ -3,17 +3,23 @@ import { BasePage } from './BasePage';
 
 export class CartPage extends BasePage {
   private readonly cartInfoContainer = this.page.locator('#cart_info');
+  // Not a role-based locator: this <a> has no href (navigation is JS-driven
+  // so the site can check login state first), so Chrome's accessibility
+  // tree doesn't expose it with the `link` role -- confirmed by inspecting
+  // the live DOM after getByRole('link', ...) failed to match it.
+  private readonly proceedToCheckoutLink = this.page.locator('a.check_out');
+  protected readonly defaultPath = '/view_cart';
 
   constructor(page: Page) {
     super(page);
   }
 
-  async goto(path: string = '/view_cart'): Promise<void> {
-    await super.goto(path);
-  }
-
   async expectCartPageLoaded(): Promise<void> {
     await this.expectVisible(this.cartInfoContainer);
+  }
+
+  async proceedToCheckout(): Promise<void> {
+    await this.click(this.proceedToCheckoutLink);
   }
 
   private getRowByProductName(productName: string) {
@@ -32,6 +38,25 @@ export class CartPage extends BasePage {
   async removeProduct(productName: string): Promise<void> {
     const row = this.getRowByProductName(productName);
     await this.click(row.locator('.cart_quantity_delete'));
+  }
+
+  /**
+   * Empties the cart entirely, one row at a time. Needed before any test
+   * that runs against a worker's shared authenticated account (see
+   * fixtures/accountFixtures.ts) -- unlike the guest-flow tests, which each
+   * start with a fresh throwaway cart, a worker-scoped storageState session
+   * carries that worker's real cart across every test the worker runs, so
+   * leftover items from an earlier test in the same worker would silently
+   * inflate quantities/totals in the next one.
+   */
+  async clearCart(): Promise<void> {
+    await this.goto();
+    const rows = this.cartInfoContainer.locator('tbody tr');
+    while (await rows.count() > 0) {
+      const row = rows.first();
+      await this.click(row.locator('.cart_quantity_delete'));
+      await row.waitFor({ state: 'detached' });
+    }
   }
 
   async expectProductRemoved(productName: string): Promise<void> {

@@ -23,6 +23,20 @@ export class LoginPage extends BasePage {
         await this.click(this.loginButton);
     }
 
+    /**
+     * Composed flow: land on the home page, open the login form via nav,
+     * submit credentials. Every test driving the login UI itself (valid or
+     * invalid credentials) needs exactly this sequence -- previously
+     * repeated inline in each test. Also used once per worker by
+     * fixtures/accountFixtures.ts to log in as that worker's throwaway
+     * account and cache the resulting session.
+     */
+    async loginViaNav(email: string, password: string): Promise<void> {
+        await this.goto();
+        await this.openViaNav();
+        await this.login(email, password);
+    }
+
     async expectLoginErrorVisible(): Promise<void> {
         await this.expectVisible(this.errorMessage);
     }
@@ -33,5 +47,9 @@ export class LoginPage extends BasePage {
 
     async expectEmailFieldRejectedByBrowser(): Promise<void> {
         await this.expectFieldInvalid(this.emailInput);
+    }
+
+    async expectPasswordFieldRejectedByBrowser(): Promise<void> {
+        await this.expectFieldInvalid(this.passwordInput);
     }
 }

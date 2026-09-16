@@ -18,6 +18,7 @@ export class ProductsPage extends BasePage {
 
   private readonly continueShoppingButton = this.page.getByRole('button', { name: 'Continue Shopping' });
   private readonly viewCartLink = this.page.getByRole('link', { name: 'View Cart' });
+  protected readonly defaultPath = '/products';
 
   constructor(page: Page) {
     super(page);
@@ -39,6 +40,18 @@ export class ProductsPage extends BasePage {
   async addFirstResultToCart(): Promise<void> {
     await this.click(this.firstAddToCartLink);
     await this.expectVisible(this.continueShoppingButton);
+  }
+
+  /**
+   * Composed flow used by every test that needs "a product in the cart"
+   * as a precondition rather than as the thing under test: search, wait
+   * for results, add the first match. Repeated identically across
+   * cart.spec.ts and productsSearch.spec.ts before being pulled in here.
+   */
+  async searchAndAddFirstToCart(searchTerm: string): Promise<void> {
+    await this.searchProduct(searchTerm);
+    await this.expectResultsVisible();
+    await this.addFirstResultToCart();
   }
 
   async continueShopping(): Promise<void> {

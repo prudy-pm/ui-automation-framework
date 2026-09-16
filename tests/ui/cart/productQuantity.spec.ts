@@ -11,7 +11,7 @@ test.describe('Product Quantity in Cart', () => {
       productDetailPage,
       cartPage,
     }) => {
-      await productsPage.goto('/products');
+      await productsPage.goto();
       await productsPage.viewProductAt(0);
       await productDetailPage.setQuantity(data.quantity);
       await productDetailPage.addToCart();
