@@ -1,4 +1,5 @@
 import { test } from '@fixtures/accountFixtures';
+import { CATALOG_PRODUCT } from '@data/scenarios';
 
 // Checkout requires a logged-in account (a guest's "Proceed To Checkout" is
 // redirected into a register/login prompt instead). Every test in this
@@ -21,15 +22,15 @@ test.describe('Checkout', () => {
     await cartPage.clearCart();
 
     await productsPage.goto();
-    await productsPage.searchAndAddFirstToCart('top');
+    await productsPage.searchAndAddFirstToCart(CATALOG_PRODUCT.searchTerm);
     await productsPage.goToCartFromModal();
 
     await cartPage.expectCartPageLoaded();
     await cartPage.proceedToCheckout();
 
     await checkoutPage.expectAddressDetailsVisible();
-    await checkoutPage.expectProductInReview('Blue Top');
-    await checkoutPage.expectOrderTotal('Rs. 500');
+    await checkoutPage.expectProductInReview(CATALOG_PRODUCT.name);
+    await checkoutPage.expectOrderTotal(CATALOG_PRODUCT.price);
     await checkoutPage.addOrderComment('Please deliver in the evening.');
     await checkoutPage.placeOrder();
 

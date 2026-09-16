@@ -1,6 +1,7 @@
 import { test } from '@fixtures/pageFixtures';
 import { readExcelSheet } from '@utils/excelData';
 import { ProductQuantityCase } from '@data/types';
+import { CATALOG_PRODUCT } from '@data/scenarios';
 
 const quantityCases = readExcelSheet<ProductQuantityCase>('data/productQuantities.xlsx');
 
@@ -18,7 +19,7 @@ test.describe('Product Quantity in Cart', () => {
       await productsPage.goToCartFromModal();
 
       await cartPage.expectCartPageLoaded();
-      await cartPage.expectProductQuantity('Blue Top', data.quantity);
+      await cartPage.expectProductQuantity(CATALOG_PRODUCT.name, data.quantity);
     });
   });
 });

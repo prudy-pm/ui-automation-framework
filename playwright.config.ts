@@ -6,6 +6,10 @@ import { env } from './config/env';
  */
 export default defineConfig({
   testDir: './tests',
+  /* Verifies the live catalog still matches data/scenarios.ts's
+   * CATALOG_PRODUCT assumption before any test runs -- see
+   * config/globalSetup.ts for why. */
+  globalSetup: require.resolve('./config/globalSetup'),
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
