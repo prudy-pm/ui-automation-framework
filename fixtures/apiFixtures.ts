@@ -8,9 +8,6 @@ type ApiFixtures = {
   accountApi: AccountApiClient;
 };
 
-// Each fixture creates its own APIRequestContext scoped to the API base URL
-// (distinct from the UI baseURL in playwright.config.ts) and disposes it after
-// the test -- no browser is ever launched for these tests.
 export const test = base.extend<ApiFixtures>({
   productsApi: async ({}, use) => {
     const apiContext = await request.newContext({ baseURL: env.apiBaseUrl });

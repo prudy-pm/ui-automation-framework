@@ -21,9 +21,8 @@ export type NewAccountDetails = {
 };
 
 // Field names here (first_name, last_name, birth_day) intentionally differ
-// from NewAccountDetails' input names (firstname, lastname, birth_date) --
-// confirmed via a real API call, not assumed. AutomationExercise's own API
-// is inconsistent between what it accepts and what it returns.
+// from NewAccountDetails' input names (firstname, lastname, birth_date)
+// AutomationExercise's own API is inconsistent between what it accepts and what it returns.
 export type UserDetailResponse = {
   responseCode: number;
   user: {

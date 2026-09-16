@@ -16,13 +16,9 @@ export type FreshAccount = {
 };
 
 type WorkerFixtures = {
-  // One throwaway account per Playwright *worker*, not per test or shared
-  // globally. Each worker process gets its own real account (and so its
-  // own server-side cart), which is what lets every worker run checkout
-  // concurrently without racing another worker over the same cart -- the
-  // failure that used to force checkout's browsers to run one at a time
-  // (see README > Authenticated Tests).
+  // One throwaway account per Playwright *worker*,
   workerAccount: FreshAccount;
+  
   // Logs in once per worker as that worker's account and caches the
   // resulting session to a per-worker file. This is Playwright's documented
   // pattern for isolating test data per parallel worker -- see
