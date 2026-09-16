@@ -38,6 +38,40 @@ test.describe('Account API', () => {
     expect(body.detail).toBe('Method "POST" not allowed.');
   });
 
+  // Confirmed via a real call -- distinct message from verifyLogin's 404 above.
+  test('getUserDetailByEmail returns 404 for an email that was never registered @regression', async ({
+    accountApi,
+  }) => {
+    const response = await accountApi.getUserDetailByEmail('definitely.not.a.real.account.xyz123@example.com');
+    const body = await response.json();
+    expect(body.responseCode).toBe(404);
+    expect(body.message).toBe('Account not found with this email, try another email!');
+  });
+
+  // Confirmed via a real call.
+  test('deleteAccount returns 404 for an account that does not exist @regression', async ({ accountApi }) => {
+    const response = await accountApi.deleteAccount('definitely.not.a.real.account.xyz123@example.com', 'whatever');
+    const body = await response.json();
+    expect(body.responseCode).toBe(404);
+    expect(body.message).toBe('Account not found!');
+  });
+
+  // Confirmed via a real call.
+  test('verifyLogin rejects a request missing the password parameter @regression', async ({ accountApi }) => {
+    const response = await accountApi.post('verifyLogin', { email: 'someone@example.com' });
+    const body = await response.json();
+    expect(body.responseCode).toBe(400);
+    expect(body.message).toBe('Bad request, email or password parameter is missing in POST request.');
+  });
+
+  // Confirmed via a real call.
+  test('createAccount rejects a request missing a required field @regression', async ({ accountApi }) => {
+    const response = await accountApi.post('createAccount', { email: 'missing.fields.test@example.com' });
+    const body = await response.json();
+    expect(body.responseCode).toBe(400);
+    expect(body.message).toBe('Bad request, name parameter is missing in POST request.');
+  });
+
   (accountProfiles as AccountProfile[]).forEach((profile) => {
     // Full resource lifecycle: create it, read it back to confirm the data
     // persisted correctly, update one field, read again to confirm the

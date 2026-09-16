@@ -6,9 +6,7 @@ import { env } from './config/env';
  */
 export default defineConfig({
   testDir: './tests',
-  /* Verifies the live catalog still matches data/scenarios.ts's
-   * CATALOG_PRODUCT assumption before any test runs -- see
-   * config/globalSetup.ts for why. */
+  /* Pre-flight catalog check -- see config/globalSetup.ts. */
   globalSetup: require.resolve('./config/globalSetup'),
   /* Run tests in files in parallel */
   fullyParallel: true,
@@ -46,6 +44,9 @@ export default defineConfig({
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
+
+    /* Attaches a screenshot to every failed test's report entry. */
+    screenshot: 'only-on-failure',
   },
 
   /* Configure projects for major browsers */
