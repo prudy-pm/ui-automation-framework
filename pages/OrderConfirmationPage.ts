@@ -1,9 +1,5 @@
 import { Page } from '@playwright/test';
 import { BasePage } from './BasePage';
-
-// Lands here at /payment_done/<order_id> after a successful payment --
-// the order id in the URL is server-generated, so this page is reached
-// via navigation rather than a fixed goto() path.
 export class OrderConfirmationPage extends BasePage {
   private readonly orderPlacedHeading = this.page.getByRole('heading', { name: 'Order Placed!' });
   private readonly confirmationMessage = this.page.getByText('Congratulations! Your order has been confirmed!');

@@ -4,9 +4,8 @@ import { NewAccountDetails } from '@api/AccountApiClient';
 /**
  * Maps a centralized AccountProfile fixture onto the field names
  * AutomationExercise's createAccount/updateAccount API actually expects
- * (confirmed via a real call -- see AccountApiClient.ts). Shared by
- * tests/api/auth.spec.ts and fixtures/accountFixtures.ts so both build the
- * same payload shape from the same fixture data.
+ * (confirmed via a real call -- see AccountApiClient.ts). Used by
+ * tests/api/auth.spec.ts's account lifecycle test.
  */
 export function toApiPayload(profile: AccountProfile, email: string, password: string): NewAccountDetails {
   return {

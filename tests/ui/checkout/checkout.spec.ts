@@ -1,13 +1,12 @@
-import { test } from '@fixtures/accountFixtures';
+import { test } from '@fixtures/pageFixtures';
 import { CATALOG_PRODUCT } from '@data/scenarios';
+import { AUTH_FILE } from '@config/authFile';
 
 // Checkout requires a logged-in account (a guest's "Proceed To Checkout" is
-// redirected into a register/login prompt instead). Every test in this
-// worker starts already authenticated as that worker's own throwaway
-// account, via the worker-scoped storageState in fixtures/accountFixtures.ts
-// -- a different worker (and so a different browser project running these
-// tests concurrently) always gets a different account, so there's no shared
-// server-side cart for parallel workers to race on.
+// redirected into a register/login prompt instead). Reuses the session
+// tests/setup/auth.setup.ts already logged in and saved -- see that file.
+test.use({ storageState: AUTH_FILE });
+
 test.describe('Checkout', () => {
   test('logged-in user can complete checkout with a card payment @smoke', async ({
     productsPage,
@@ -16,9 +15,8 @@ test.describe('Checkout', () => {
     paymentPage,
     orderConfirmationPage,
   }) => {
-    // The worker's account/cart is reused across every test this worker
-    // runs, so clear it first -- deterministic quantities/totals below
-    // regardless of what an earlier test in this worker left behind.
+    // The shared account's cart carries over between runs -- clear it first
+    // so quantities/totals below are deterministic.
     await cartPage.clearCart();
 
     await productsPage.goto();

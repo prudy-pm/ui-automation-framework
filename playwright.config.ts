@@ -51,27 +51,35 @@ export default defineConfig({
 
   /* Configure projects for major browsers */
   projects: [
-    /* Checkout used to need its own chained, single-worker "*-authenticated"
-     * projects because every test shared one real account's server-side
-     * cart via a pre-saved storageState -- concurrent workers racing that
-     * cart produced genuinely corrupted totals. checkout.spec.ts now seeds
-     * a throwaway account per test via the API (fixtures/accountFixtures.ts)
-     * and logs in through the UI like any other spec, so it no longer needs
-     * special-casing here: it just runs as part of these three projects,
-     * fully parallel, like everything else. */
+    /* Runs tests/setup/auth.setup.ts once, before chromium, to produce
+     * playwright/.auth/testUser.json -- see that file and config/authFile.ts. */
+    {
+      name: 'setup',
+      testMatch: /.*\.setup\.ts/,
+    },
+
+    /* checkout.spec.ts reuses one shared, pre-existing account's session
+     * (see tests/setup/auth.setup.ts) and only runs here, not on
+     * firefox/webkit -- a full paid checkout journey doesn't need to prove
+     * itself cross-browser the way a smoke check does, and restricting it
+     * to one project means there's only ever one instance of that test
+     * touching that account's cart at a time, so nothing races. */
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+      dependencies: ['setup'],
     },
 
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
+      testIgnore: /tests[\\/]ui[\\/]checkout[\\/]/,
     },
 
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
+      testIgnore: /tests[\\/]ui[\\/]checkout[\\/]/,
     },
 
     /* Test against mobile viewports. */

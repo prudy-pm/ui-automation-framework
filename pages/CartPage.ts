@@ -40,15 +40,8 @@ export class CartPage extends BasePage {
     await this.click(row.locator('.cart_quantity_delete'));
   }
 
-  /**
-   * Empties the cart entirely, one row at a time. Needed before any test
-   * that runs against a worker's shared authenticated account (see
-   * fixtures/accountFixtures.ts) -- unlike the guest-flow tests, which each
-   * start with a fresh throwaway cart, a worker-scoped storageState session
-   * carries that worker's real cart across every test the worker runs, so
-   * leftover items from an earlier test in the same worker would silently
-   * inflate quantities/totals in the next one.
-   */
+  // Empties the cart, one row at a time -- needed before checkout.spec.ts, whose
+  // shared account's cart carries over between runs (see tests/setup/auth.setup.ts).
   async clearCart(): Promise<void> {
     await this.goto();
     const rows = this.cartInfoContainer.locator('tbody tr');

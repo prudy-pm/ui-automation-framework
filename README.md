@@ -17,24 +17,25 @@ End-to-end UI and API test automation for [AutomationExercise](https://automatio
 ```
 ui-automation-framework/
 ├── tests/
+│   ├── setup/               # auth.setup.ts -- logs in once, saves storageState (see Authenticated Tests)
 │   ├── ui/
 │   │   ├── auth/          # login: valid, data-driven invalid, browser-validation edge case
 │   │   ├── products/       # search (Excel-driven), add to cart
-│   │   ├── cart/            # add/remove, price & quantity verification (Excel-driven)
-│   │   ├── checkout/         # full add-to-cart -> pay -> confirm flow (per-worker seeded account + cached storageState)
+│   │   ├── cart/            # add/remove, price (JSON-driven) & quantity (JSON-driven) verification
+│   │   ├── checkout/         # full add-to-cart -> pay -> confirm flow (shared session via storageState, chromium-only)
 │   │   └── newsletter/       # subscription from home & cart pages (Faker-driven)
 │   └── api/                  # products, account CRUD lifecycle, layered validation
 ├── pages/                     # Page Object Model classes, all extending BasePage
 │   └── FooterComponent.ts       # shared, cross-page component (not tied to one page)
 ├── api/                        # API client classes, all extending BaseApiClient
-├── fixtures/                    # pageFixtures.ts, apiFixtures.ts, and accountFixtures.ts
-├── data/                         # JSON, nested JSON, and Excel test data + TS types
-├── config/                        # env.ts -- URL/credentials
+├── fixtures/                    # pageFixtures.ts and apiFixtures.ts
+├── data/                         # JSON, nested JSON, and one deliberate Excel example + TS types
+├── config/                        # env.ts (URL/credentials), authFile.ts (shared storageState path), globalSetup.ts (pre-flight catalog check)
 ├── utils/                          # generateUniqueEmail, faker wrappers, readExcelSheet, accountFactory
 ├── scripts/                         # generate-allure-report.js -- local report generation with history retained
 ├── .env.example
 ├── tsconfig.json                    # @pages/@fixtures/@config/@data/@utils/@api aliases
-└── playwright.config.ts               # chromium/firefox/webkit projects, fully parallel -- no auth-setup project
+└── playwright.config.ts               # setup project + chromium/firefox/webkit; checkout depends on setup, chromium-only
 ```
 
 Tests are grouped by **feature**, not by type. Tests are tagged (`@smoke`, `@regression`) so subsets can be run independently.
@@ -75,8 +76,8 @@ npm run report:allure        # generate (history-preserving) + open the Allure r
 - Login — valid credentials, data-driven invalid credentials (Faker-generated, not committed), browser-validation edge case
 - Empty-field validation — login (email, password) and signup (name, email) each reject an empty required field client-side before any request is sent; a distinct concern from the credential-value tests above, kept in its own spec
 - Products — Excel-driven search, add to cart
-- Cart — add/verify price, remove/verify gone, quantity carries through correctly from product detail page (Excel-driven)
-- Checkout — full add-to-cart → address review → order comment → card payment → confirmation flow, starting from a cached `storageState` for a throwaway account seeded via the API once per worker (see [Authenticated Tests](#authenticated-tests))
+- Cart — add/verify price, remove/verify gone, quantity carries through correctly from product detail page (JSON-driven)
+- Checkout — full add-to-cart → address review → order comment → card payment → confirmation flow, starting from a cached `storageState` for the shared test user (see [Authenticated Tests](#authenticated-tests))
 - Newsletter subscription — home page and cart page, both using a shared `FooterComponent` (Faker-generated emails)
 
 **API:**
@@ -87,23 +88,21 @@ npm run report:allure        # generate (history-preserving) + open the Allure r
 
 Most UI specs (login, products, cart, newsletter) run as a guest and get a fresh, empty browser context every test — no login needed, nothing to reset. Checkout is different: automationexercise.com requires a logged-in account before it will show the checkout page at all.
 
-`fixtures/accountFixtures.ts` seeds one throwaway account **per Playwright worker** via `AccountApiClient.createAccount` (the same create/delete lifecycle proven out in `tests/api/auth.spec.ts`, built from the same `data/accountProfiles.json` fixture via `utils/accountFactory.ts`), logs in as it once, and caches that session as that worker's `storageState` — this is Playwright's documented [isolate-test-data-per-worker](https://playwright.dev/docs/test-parallel#worker-index) pattern. A spec opts in the same way as the old shared-account design, just pointed at a different fixtures module:
+`tests/setup/auth.setup.ts` runs as its own Playwright **setup project** (`dependencies: ['setup']` on `chromium` in `playwright.config.ts` — [Playwright's documented pattern](https://playwright.dev/docs/auth)): it logs in once, via the UI, as the same `env.testUser` the API and login tests already use, and saves the session with `page.context().storageState({ path: AUTH_FILE })`. `checkout.spec.ts` then just declares which session it wants, in plain sight at the top of the file:
 
 ```ts
-import { test } from '@fixtures/accountFixtures';
+import { AUTH_FILE } from '@config/authFile';
 
-test('...', async ({ page }) => {
-  // already logged in as this worker's account
-});
+test.use({ storageState: AUTH_FILE });
 ```
 
-The account is deleted (in a `finally`, so a failed assertion doesn't leak it) when Playwright tears the worker down.
+No account is created or deleted for this — `env.testUser` is a real, pre-existing account, not throwaway data, so there's nothing to clean up.
 
-`login.spec.ts` deliberately never does this -- exercising the login form with `env.testUser` is the entire point of those tests, and doesn't need a disposable account or a cached session.
+**Why checkout runs on chromium only.** Reusing one account's session means reusing that account's server-side cart. Running the *same* checkout test concurrently across multiple browser projects against that one cart is exactly how this repo found a real corrupted-total bug before (three concurrent runs racing one cart). Rather than build isolation machinery to make concurrent reuse safe, checkout is restricted to a single project — `firefox`/`webkit` both set `testIgnore` on `tests/ui/checkout/`. A full paid checkout journey doesn't need to prove itself cross-browser the same way a cheap smoke check does, and with only one project ever running it, there is only ever one instance of that test touching that account's cart at a time — nothing left to race, regardless of how many Playwright workers are running.
 
-**Why per-worker, not one shared account.** Checkout used to log in once via a `tests/setup/auth.setup.ts` project and reuse that *one* session's `storageState` across every checkout test/browser. That meant every worker shared the same real account and its same server-side cart -- confirmed by a genuine failure where three parallel workers each cleared/added to that one cart at once and every one saw a corrupted total. The workaround at the time was to chain the three checkout browser projects so they never ran concurrently, trading cross-browser speed for correctness. Giving each *worker* its own account keeps the storageState caching technique (no test re-drives the login form) while removing the thing workers were actually racing on: two workers now never touch the same account, so checkout runs fully parallel across `chromium`/`firefox`/`webkit` again, with no special-cased projects in `playwright.config.ts`.
+**A design this repo tried and moved away from:** an earlier version gave every Playwright *worker* its own throwaway account (created/deleted via the API per worker) specifically so checkout could run fully parallel across all three browsers at once. That worked, but it was real infrastructure — per-worker account lifecycle, cached per-worker `storageState` — built to support exactly one test, and it obscured the actual point of `storageState` (skip re-running the login UI) behind machinery solving a concurrency problem checkout doesn't need to have. The current design is deliberately simpler: one account, one session, one project.
 
-**One gotcha carried over from the old design, now scoped to a worker instead of the whole suite:** every test that lands on the same worker reuses that worker's account and cart across runs. `checkout.spec.ts` calls `cartPage.clearCart()` as its first step to keep quantities/totals deterministic regardless of what an earlier test in that worker left behind; any future authenticated spec sharing this fixture should do the same rather than assume a clean starting cart.
+`checkout.spec.ts` still calls `cartPage.clearCart()` as its first step — the shared account's cart carries over between runs regardless of which design backs the session, so this stays necessary either way.
 
 ## Timeouts & Wait Strategy
 
@@ -146,7 +145,7 @@ The connection itself is fast; the origin server takes 10+ seconds just to start
 - **Test data is split by what's safe to commit.** Structural/scenario data is committed; anything credential-shaped or uniqueness-sensitive is generated at runtime — committing plausible fake credentials to a public repo would let anyone register those exact accounts and silently break the tests later.
 - **Validation is tested per layer, not per field** — browser, server, and business-rule rejections are separate tests, so one layer's failure can never mask another's.
 - **Explore before asserting.** Where a response shape or API contract wasn't already confirmed (e.g. `updateAccount`'s required HTTP method, `getUserDetailByEmail`'s field-naming inconsistency with the create endpoint), a temporary exploratory test logged the real response first — assertions were written from evidence, not assumptions.
-- **Data source is chosen deliberately per case**: Excel where a non-technical stakeholder might realistically edit the data (search terms, quantities); JSON for anything nested or structural (account profiles, scenario metadata); Faker for anything that must never be predictable (credentials, subscription emails).
+- **Data source is chosen deliberately per case**: Excel for exactly one case where a non-technical stakeholder might realistically edit the data (`productSearchTerms.xlsx`) — product quantities used to be a second Excel file too, but it proved the same mechanism a second time without teaching anything new, so it moved to JSON instead; JSON for anything nested/structural (account profiles, scenario metadata) or simple enough not to need a spreadsheet; Faker for anything that must never be predictable (credentials, subscription emails).
 
 ## Future Considerations
 
@@ -159,7 +158,7 @@ The connection itself is fast; the origin server takes 10+ seconds just to start
 - Excel + JSON + Faker data strategies, chosen deliberately per case
 - Layered field-validation testing
 - Full API resource lifecycle (CRUD) testing
-- Place Order / checkout flow (TC14-16), authenticated via a cached `storageState` for a throwaway account seeded via the API once per worker — see [Authenticated Tests](#authenticated-tests)
+- Place Order / checkout flow (TC14-16), authenticated via a cached `storageState` for the shared test user, produced by a Playwright setup project — see [Authenticated Tests](#authenticated-tests)
 - Local Allure trend/history graphs, preserved across runs via `scripts/generate-allure-report.js`
 - Empty-field validation tests (login + signup), kept separate from the credential-value tests in `login.spec.ts` as a distinct concern
 
@@ -177,7 +176,7 @@ The connection itself is fast; the origin server takes 10+ seconds just to start
 - [x] CI pipeline — secrets, cross-browser matrix, job summary, Teams alert, dual reporting
 - [x] Excel, JSON, and Faker data strategies, each used deliberately
 - [x] Place Order / checkout flow
-- [x] Per-worker seeded accounts + cached `storageState` for checkout (no shared auth state)
+- [x] Shared test-user session via a Playwright setup project + cached `storageState` for checkout (chromium-only)
 - [x] Allure trend/history retained across local runs
 - [x] Empty-field validation tests (login + signup)
 - [ ] CI-side Allure trend history

@@ -4,7 +4,7 @@ import { BasePage } from './BasePage';
 // Requires an authenticated session -- automationexercise.com redirects a
 // guest cart's "Proceed To Checkout" into a register/login prompt instead
 // of this page. checkout.spec.ts reaches here already authenticated via a
-// worker-scoped storageState (see fixtures/accountFixtures.ts).
+// saved storageState (see tests/setup/auth.setup.ts).
 export class CheckoutPage extends BasePage {
   // `.step-one` is reused for both the "Address Details" and "Review Your
   // Order" sections on this page -- confirmed via a strict-mode violation

@@ -1,12 +1,10 @@
 import { test } from '@fixtures/pageFixtures';
-import { readExcelSheet } from '@utils/excelData';
 import { ProductQuantityCase } from '@data/types';
 import { CATALOG_PRODUCT } from '@data/scenarios';
-
-const quantityCases = readExcelSheet<ProductQuantityCase>('data/productQuantities.xlsx');
+import quantityCases from '@data/productQuantities.json';
 
 test.describe('Product Quantity in Cart', () => {
-  quantityCases.forEach((data) => {
+  (quantityCases as ProductQuantityCase[]).forEach((data) => {
     test(`cart reflects quantity of ${data.quantity} @regression`, async ({
       productsPage,
       productDetailPage,

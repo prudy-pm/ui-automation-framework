@@ -11,3 +11,5 @@ allure-results/
 allure-report/
 
 playwright/.auth/
+
+*.log
