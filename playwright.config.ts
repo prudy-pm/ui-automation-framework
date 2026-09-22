@@ -1,5 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 import fs from 'fs';
+import { execSync } from 'child_process';
 import { env } from './config/env';
 
 /* Start every run with an empty allure-results/ -- allure-playwright only adds
@@ -10,11 +11,30 @@ if (process.env.TEST_WORKER_INDEX === undefined) {
   fs.rmSync('allure-results', { recursive: true, force: true });
 }
 
+/* "Which build was tested" for the reports. The app under test is a third-party
+ * live site with no version to read, so this records what we can: where we
+ * pointed, which browsers, and which version of this framework ran. */
+const git = (args: string): string => {
+  try {
+    return execSync(`git ${args}`, { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+  } catch {
+    return '';
+  }
+};
+const buildInfo = {
+  'Base URL': env.baseUrl,
+  'Framework commit': (git('rev-parse --short HEAD') || 'unknown') + (git('status --porcelain') ? ' (uncommitted changes)' : ''),
+  'Configured browsers': 'chromium, firefox, webkit', // keep in sync with `projects` below; a filtered run may use fewer
+  'Run type': process.env.CI ? 'CI' : 'local',
+};
+
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
   testDir: './tests',
+  /* Shown as key/values in the Monocart report (see also environmentInfo on the Allure reporter). */
+  metadata: buildInfo,
   /* @demo tests fail on purpose (to show how failures look in reports), so
    * they are excluded from normal runs. Opt in with `npm run test:demo`. */
   grepInvert: process.env.RUN_DEMO ? undefined : /@demo/,
@@ -47,7 +67,7 @@ export default defineConfig({
   reporter: [
     ['html'],
     ['@estruyf/github-actions-reporter'],
-    ['allure-playwright', { resultsDir: 'allure-results', detail: false }],
+    ['allure-playwright', { resultsDir: 'allure-results', environmentInfo: buildInfo, detail: false }],
     /* Trial: evaluating this against Allure for step-level detail + easy
      * sharing -- see README Reporting section. Kept alongside Allure long
      * term, not a replacement -- each has strengths the other doesn't.
