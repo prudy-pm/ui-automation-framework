@@ -56,6 +56,15 @@ TEST_USER_PASSWORD=
 ```
 `.env` is gitignored. Note the trailing slash on `API_BASE_URL` — required for correct URL resolution against the API clients' relative paths.
 
+**Getting a `TEST_USER_EMAIL` / `TEST_USER_PASSWORD`.** `env.testUser` must be a real, already-registered account on automationexercise.com — the suite only logs in with it (UI login, API `verifyLogin`), it never signs one up automatically. To get one:
+1. Go to automationexercise.com and use **Signup / Login** to register a new account. This is a public practice site with no real payment or personal data involved, so a dedicated test-only account is expected and normal — don't reuse a real personal password here. This is a one-time setup step: the same account is reused indefinitely (see below), including for the checkout flow's shared session (see [Authenticated Tests](#authenticated-tests)).
+2. Put that account's email/password into your local `.env` only. `.env` is gitignored — it never gets committed, and the values never belong in code, docs, commit messages, or chat.
+3. For CI, the same two values are configured as repository secrets (`TEST_USER_EMAIL`, `TEST_USER_PASSWORD` — see `.github/workflows/playwright.yml`), not read from any file in the repo. If you're standing up CI on a fork or new remote, set those (plus `BASE_URL`, `API_BASE_URL`, `TEAMS_WEBHOOK_URL`) under Settings → Secrets and variables → Actions.
+
+No test ever deletes or mutates this account (confirmed: the one spec that reuses its email for `updateAccount` deliberately sends the wrong HTTP method to test a 405 rejection, not a real update) — the same account works indefinitely.
+
+`config/globalSetup.ts` logs in with this account once before the suite runs and **aborts the whole run if that login fails** — so a wrong/missing password fails every test, not just the login ones. If you see every test failing at setup, check `.env` first.
+
 **Allure reports require a local JDK (Java 8+)** — run `java -version` to confirm. This only affects local report generation; CI is unaffected.
 
 ## Running Tests

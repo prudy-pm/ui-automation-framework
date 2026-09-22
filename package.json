@@ -11,7 +11,6 @@
     "test:regression": "playwright test --grep @regression",
     "test:demo": "node scripts/run-demo.js",
     "report": "playwright show-report",
-    "report:allure": "node scripts/generate-allure-report.js && npx allure open allure-report",
     "report:allure:single": "npx allure generate allure-results --single-file --clean -o allure-report-single",
     "report:monocart": "npx monocart show-report monocart-report/index.html",
     "report:gaps": "node scripts/coverage-gaps.js",
