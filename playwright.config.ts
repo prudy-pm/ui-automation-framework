@@ -6,6 +6,9 @@ import { env } from './config/env';
  */
 export default defineConfig({
   testDir: './tests',
+  /* @demo tests fail on purpose (to show how failures look in reports), so
+   * they are excluded from normal runs. Opt in with `npm run test:demo`. */
+  grepInvert: process.env.RUN_DEMO ? undefined : /@demo/,
   /* Pre-flight catalog check -- see config/globalSetup.ts. */
   globalSetup: require.resolve('./config/globalSetup'),
   /* Run tests in files in parallel */
