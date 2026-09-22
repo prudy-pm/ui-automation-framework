@@ -91,7 +91,19 @@ export default defineConfig({
        * application/vnd.allure.message+json, confirmed by inspecting a
        * real report's data), not a real attachment a reader would want to
        * open. Filtered by contentType, not the display name Monocart
-       * derives from it, since that's more likely to stay stable. */
+       * derives from it, since that's more likely to stay stable.
+       *
+       * That filter only clears the case-level Attachments *column* --
+       * every Allure API call (epic/feature/story/severity, all called
+       * inside tagAllure()'s beforeEach) also shows up as its own *step*
+       * ("Attach \"Allure Metadata (metadata)\"", stepType: 'test.attach'),
+       * nested under Before Hooks -> beforeEach hook, confirmed by
+       * inspecting a real report's step tree. Steps don't carry
+       * contentType (Monocart deliberately doesn't expose it there), so
+       * this filters by stepType + title instead. Runs bottom-up (a
+       * step's own subs are already built by the time its visitor call
+       * happens, confirmed via Monocart's source), so filtering data.subs
+       * here cleans every level on the way up to Before/After Hooks. */
       visitor: (data, metadata) => {
         for (const item of metadata.annotations ?? []) {
           if (['epic', 'feature', 'story', 'severity'].includes(item.type) && item.description) {
@@ -100,6 +112,9 @@ export default defineConfig({
         }
         if (data.attachments) {
           data.attachments = data.attachments.filter((a) => a.contentType !== 'application/vnd.allure.message+json');
+        }
+        if (data.subs) {
+          data.subs = data.subs.filter((s) => !(s.stepType === 'test.attach' && s.title?.includes('Allure Metadata')));
         }
       },
       columns: (defaultColumns) => {
