@@ -1,5 +1,14 @@
 import { defineConfig, devices } from '@playwright/test';
+import fs from 'fs';
 import { env } from './config/env';
+
+/* Start every run with an empty allure-results/ -- allure-playwright only adds
+ * files, so results from earlier runs otherwise get mixed into this run's
+ * report. Workers re-load this config mid-run, hence the TEST_WORKER_INDEX
+ * guard (it is only unset in the main process). */
+if (process.env.TEST_WORKER_INDEX === undefined) {
+  fs.rmSync('allure-results', { recursive: true, force: true });
+}
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -38,7 +47,7 @@ export default defineConfig({
   reporter: [
     ['html'],
     ['@estruyf/github-actions-reporter'],
-    ['allure-playwright', { resultsDir: 'allure-results' }],
+    ['allure-playwright', { resultsDir: 'allure-results', detail: false }],
     /* Trial: evaluating this against Allure for step-level detail + easy
      * sharing -- see README Reporting section. Kept alongside Allure long
      * term, not a replacement -- each has strengths the other doesn't.
