@@ -1,4 +1,5 @@
 import { test, expect } from '@fixtures/pageFixtures';
+import { linkIssue } from '@utils/allureTags';
 import { CATALOG_PRODUCT } from '@data/scenarios';
 
 // TEMPORARY -- UI half of tests/demo/intentionalApiFailure.spec.ts. Delete after the demo.
@@ -7,6 +8,7 @@ test.describe('DEMO: intentional failure (UI)', () => {
     productsPage,
     cartPage,
   }) => {
+    await linkIssue('DEMO-2');
     await productsPage.goto();
     await productsPage.searchAndAddFirstToCart(CATALOG_PRODUCT.searchTerm);
     await productsPage.goToCartFromModal();

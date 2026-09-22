@@ -1,4 +1,5 @@
 import { test, expect } from '@fixtures/apiFixtures';
+import { describeTest, tagAllure } from '@utils/allureTags';
 import { env } from '@config/env';
 import { generateUniqueEmail, generateRandomPassword } from '@utils/helpers';
 import { toApiPayload } from '@utils/accountFactory';
@@ -6,7 +7,9 @@ import accountProfiles from '@data/accountProfiles.json';
 import { AccountProfile } from '@data/types';
 
 test.describe('Account API', () => {
+  tagAllure({ epic: 'Account', feature: 'Account API', story: 'Account management' });
   test('verifyLogin succeeds for the existing test account @smoke', async ({ accountApi }) => {
+    await describeTest('The API confirms the shared test account can log in with its real credentials.');
     const response = await accountApi.verifyLogin(env.testUser.email, env.testUser.password);
     const body = await response.json();
     expect(body.responseCode).toBe(200);

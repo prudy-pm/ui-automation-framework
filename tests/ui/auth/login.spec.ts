@@ -1,4 +1,5 @@
 import { test } from '@fixtures/pageFixtures';
+import { describeTest, tagAllure } from '@utils/allureTags';
 import { env } from '@config/env';
 import { generateRandomEmail, generateRandomPassword } from '@utils/helpers';
 import loginScenarios from '@data/loginScenarios.json';
@@ -19,7 +20,9 @@ function resolveCredentials(source: string): { email: string; password: string }
 }
 
 test.describe('Login', () => {
+  tagAllure({ epic: 'Account', feature: 'Authentication', story: 'Login' });
   test('user can log in with valid credentials @smoke', async ({ loginPage }) => {
+    await describeTest('A registered user can log in through the website with valid credentials.');
     await loginPage.loginViaNav(env.testUser.email, env.testUser.password);
     await loginPage.expectLoggedInSuccessfully();
   });

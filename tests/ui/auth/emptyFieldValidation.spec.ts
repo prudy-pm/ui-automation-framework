@@ -1,7 +1,9 @@
 import { test } from '@fixtures/pageFixtures';
+import { tagAllure } from '@utils/allureTags';
 import { generateRandomEmail, generateRandomPassword } from '@utils/helpers';
 
 test.describe('Empty Field Validation', () => {
+  tagAllure({ epic: 'Account', feature: 'Authentication', story: 'Empty-field validation' });
   test.describe('Login form', () => {
     test('browser blocks empty email before submission @regression', async ({ loginPage }) => {
       await loginPage.loginViaNav('', generateRandomPassword());

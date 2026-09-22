@@ -1,13 +1,15 @@
 import { test } from '@fixtures/pageFixtures';
+import { describeTest, tagAllure } from '@utils/allureTags';
 import { CATALOG_PRODUCT } from '@data/scenarios';
 import { AUTH_FILE } from '@config/authFile';
 
 // Checkout requires a logged-in account (a guest's "Proceed To Checkout" is
 // redirected into a register/login prompt instead). Reuses the session
-// tests/setup/auth.setup.ts already logged in and saved -- see that file.
+// config/globalSetup.ts already logged in and saved -- see that file.
 test.use({ storageState: AUTH_FILE });
 
 test.describe('Checkout', () => {
+  tagAllure({ epic: 'Shopping', feature: 'Checkout', story: 'Pay with card' });
   test('logged-in user can complete checkout with a card payment @smoke', async ({
     productsPage,
     cartPage,
@@ -15,6 +17,7 @@ test.describe('Checkout', () => {
     paymentPage,
     orderConfirmationPage,
   }) => {
+    await describeTest('A logged-in shopper can buy a product end to end: cart, address review, card payment and order confirmation.');
     // The shared account's cart carries over between runs -- clear it first
     // so quantities/totals below are deterministic.
     await cartPage.clearCart();

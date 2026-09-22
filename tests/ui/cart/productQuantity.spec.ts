@@ -1,9 +1,11 @@
 import { test } from '@fixtures/pageFixtures';
+import { tagAllure } from '@utils/allureTags';
 import { ProductQuantityCase } from '@data/types';
 import { CATALOG_PRODUCT } from '@data/scenarios';
 import quantityCases from '@data/productQuantities.json';
 
 test.describe('Product Quantity in Cart', () => {
+  tagAllure({ epic: 'Shopping', feature: 'Cart', story: 'Quantity' });
   (quantityCases as ProductQuantityCase[]).forEach((data) => {
     test(`cart reflects quantity of ${data.quantity} @regression`, async ({
       productsPage,

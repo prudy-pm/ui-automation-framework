@@ -1,7 +1,10 @@
 import { test, expect } from '@fixtures/apiFixtures';
+import { describeTest, tagAllure } from '@utils/allureTags';
 
 test.describe('Products API', () => {
+  tagAllure({ epic: 'Shopping', feature: 'Products', story: 'Catalog API' });
   test('GET productsList returns 200 and a non-empty product list @smoke', async ({ productsApi }) => {
+    await describeTest('The product catalog API responds and returns a non-empty product list.');
     const response = await productsApi.getAllProducts();
     expect(response.status()).toBe(200);
 

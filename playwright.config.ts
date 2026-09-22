@@ -61,6 +61,25 @@ export default defineConfig({
       outputFile: 'monocart-report/index.html',
       zip: true,
       trend: './monocart-report/index.json',
+      /* Copies the epic/feature/story/severity annotations set by
+       * utils/allureTags.ts onto each test row, shown as columns below.
+       * Monocart has no epic()/feature()/story() API of its own like
+       * Allure -- this is how the two reports end up agreeing. */
+      visitor: (data, metadata) => {
+        for (const item of metadata.annotations ?? []) {
+          if (['epic', 'feature', 'story', 'severity'].includes(item.type) && item.description) {
+            data[item.type] = item.description;
+          }
+        }
+      },
+      columns: (defaultColumns) => {
+        const at = defaultColumns.findIndex((column) => column.id === 'duration');
+        defaultColumns.splice(at, 0,
+          { id: 'feature', name: 'Feature', width: 110, searchable: true, sortable: true },
+          { id: 'story', name: 'Story', width: 150, searchable: true, sortable: true },
+          { id: 'severity', name: 'Severity', width: 80, searchable: true, sortable: true },
+        );
+      },
       tags: {
         smoke: { background: '#0B7A3D' },
         regression: { background: '#0B5FA3' },
