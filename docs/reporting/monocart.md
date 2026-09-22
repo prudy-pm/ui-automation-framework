@@ -35,7 +35,11 @@ In `playwright.config.ts`:
   `visitor` function copies those annotations onto each row's `data`, which the `columns` function below then
   displays. It also strips the "Allure Metadata (metadata)" attachment(s) allure-playwright sends itself via
   Playwright's own attachment mechanism (`contentType: 'application/vnd.allure.message+json'`, confirmed by
-  inspecting a real report's data) -- internal bookkeeping, not something a reader would ever want to open.
+  inspecting a real report's data) -- internal bookkeeping, not something a reader would ever want to open. That
+  only clears the case-level Attachments *column*; every Allure API call also shows up as its own *step*
+  ("Attach \"Allure Metadata (metadata)\"", nested under Before Hooks → beforeEach hook), which the visitor
+  separately filters out of `data.subs` (steps don't carry `contentType`, so this one is matched by
+  `stepType: 'test.attach'` + title instead).
 - **`columns`** — drops three of Monocart's default columns, confirmed dead weight by inspecting real report
   data: **expectedStatus** (constant `'passed'` on every row in this suite -- nothing uses `test.fail()` or
   `test.fixme()`), **status** (duplicates **outcome** on every passing row), and **annotations** (superseded by
