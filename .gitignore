@@ -11,6 +11,7 @@ allure-results/
 allure-report/
 allure-report-single/
 monocart-report/
+reports-archive/
 release-summary/
 
 playwright/.auth/

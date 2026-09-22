@@ -15,7 +15,8 @@
     "report:allure:single": "npx allure generate allure-results --single-file --clean -o allure-report-single",
     "report:monocart": "npx monocart show-report monocart-report/index.html",
     "report:gaps": "node scripts/coverage-gaps.js",
-    "report:summary": "node scripts/release-summary.js"
+    "report:summary": "node scripts/release-summary.js",
+    "report:archive": "node scripts/archive-reports.js"
   },
   "keywords": [],
   "author": "",
