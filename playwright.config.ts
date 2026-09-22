@@ -38,7 +38,7 @@ export default defineConfig({
   /* @demo tests fail on purpose (to show how failures look in reports), so
    * they are excluded from normal runs. Opt in with `npm run test:demo`. */
   grepInvert: process.env.RUN_DEMO ? undefined : /@demo/,
-  /* Pre-flight catalog check -- see config/globalSetup.ts. */
+  /* Pre-flight catalog check + test-user login -- see config/globalSetup.ts. */
   globalSetup: require.resolve('./config/globalSetup'),
   /* Run tests in files in parallel */
   fullyParallel: true,
@@ -121,15 +121,8 @@ export default defineConfig({
 
   /* Configure projects for major browsers */
   projects: [
-    /* Runs tests/setup/auth.setup.ts once, before chromium, to produce
-     * playwright/.auth/testUser.json -- see that file and config/authFile.ts. */
-    {
-      name: 'setup',
-      testMatch: /.*\.setup\.ts/,
-    },
-
     /* checkout.spec.ts reuses one shared, pre-existing account's session
-     * (see tests/setup/auth.setup.ts) and only runs here, not on
+     * (saved by config/globalSetup.ts) and only runs here, not on
      * firefox/webkit -- a full paid checkout journey doesn't need to prove
      * itself cross-browser the way a smoke check does, and restricting it
      * to one project means there's only ever one instance of that test
@@ -137,7 +130,6 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
-      dependencies: ['setup'],
     },
 
     {
