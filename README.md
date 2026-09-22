@@ -17,7 +17,6 @@ End-to-end UI and API test automation for [AutomationExercise](https://automatio
 ```
 ui-automation-framework/
 ├── tests/
-│   ├── setup/               # auth.setup.ts -- logs in once, saves storageState (see Authenticated Tests)
 │   ├── ui/
 │   │   ├── auth/          # login: valid, data-driven invalid, browser-validation edge case
 │   │   ├── products/       # search (Excel-driven), add to cart
@@ -30,12 +29,13 @@ ui-automation-framework/
 ├── api/                        # API client classes, all extending BaseApiClient
 ├── fixtures/                    # pageFixtures.ts and apiFixtures.ts
 ├── data/                         # JSON, nested JSON, and one deliberate Excel example + TS types
-├── config/                        # env.ts (URL/credentials), authFile.ts (shared storageState path), globalSetup.ts (pre-flight catalog check)
-├── utils/                          # generateUniqueEmail, faker wrappers, readExcelSheet, accountFactory
-├── scripts/                         # generate-allure-report.js -- local report generation with history retained
+├── config/                        # env.ts (URL/credentials), authFile.ts (shared storageState path), globalSetup.ts (pre-flight catalog check + test-user login)
+├── utils/                          # generateUniqueEmail, faker wrappers, readExcelSheet, accountFactory, allureTags.ts (report tagging), step.ts (@step decorator)
+├── scripts/                         # release-summary.js, coverage-gaps.js, archive-reports.js, run-demo.js -- report helpers (see Reporting)
+├── docs/reporting/                   # allure.md, monocart.md -- each report's own configuration and rationale
 ├── .env.example
 ├── tsconfig.json                    # @pages/@fixtures/@config/@data/@utils/@api aliases
-└── playwright.config.ts               # setup project + chromium/firefox/webkit; checkout depends on setup, chromium-only
+└── playwright.config.ts               # chromium/firefox/webkit projects; checkout runs on chromium only
 ```
 
 Tests are grouped by **feature**, not by type. Tests are tagged (`@smoke`, `@regression`) so subsets can be run independently.
@@ -67,7 +67,12 @@ npm run test:api             # API suite only
 npm run test:smoke           # @smoke-tagged tests only
 npm run test:regression      # @regression-tagged tests only
 npm run report               # open the last Playwright HTML report
-npm run report:allure        # generate (history-preserving) + open the Allure report
+npm run report:allure:single # one-file Allure report (open the generated index.html)
+npm run report:monocart      # open the Monocart report
+npm run report:summary       # one-page release-readiness summary of the last run
+npm run report:gaps          # what is / is not automated, vs the site's documented cases
+npm run report:archive       # copy the current reports to reports-archive/<date>/
+npm run test:demo            # the intentional-failure demo tests (excluded from normal runs)
 ```
 
 ## What's Covered
@@ -88,7 +93,7 @@ npm run report:allure        # generate (history-preserving) + open the Allure r
 
 Most UI specs (login, products, cart, newsletter) run as a guest and get a fresh, empty browser context every test — no login needed, nothing to reset. Checkout is different: automationexercise.com requires a logged-in account before it will show the checkout page at all.
 
-`tests/setup/auth.setup.ts` runs as its own Playwright **setup project** (`dependencies: ['setup']` on `chromium` in `playwright.config.ts` — [Playwright's documented pattern](https://playwright.dev/docs/auth)): it logs in once, via the UI, as the same `env.testUser` the API and login tests already use, and saves the session with `page.context().storageState({ path: AUTH_FILE })`. `checkout.spec.ts` then just declares which session it wants, in plain sight at the top of the file:
+`config/globalSetup.ts` logs in once before the suite, via the UI, as the same `env.testUser` the API and login tests already use, and saves the session with `context.storageState({ path: AUTH_FILE })`. It runs as global setup, not as a test, so it does not appear in reports as a scenario; a login failure aborts the run with a clear error (retried once first). `checkout.spec.ts` then just declares which session it wants, in plain sight at the top of the file:
 
 ```ts
 import { AUTH_FILE } from '@config/authFile';
@@ -130,13 +135,19 @@ The connection itself is fast; the origin server takes 10+ seconds just to start
 | Layer | What it's for | Where to find it |
 |---|---|---|
 | **Playwright HTML report** | Fast, built-in, single-run diagnostics: screenshots, traces, timelines on failure. Not meant to retain history across runs -- it's a snapshot of the last run, and Playwright overwrites `playwright-report/` every time by design. | `npm run report`; downloadable CI artifact |
-| **Allure report** | Richer breakdown (suites, categories, behaviors) **and trend graphs across runs** (pass/fail, duration, retries over time). | `npm run report:allure`; downloadable CI artifact |
+| **Allure single-file report** | Suites, behaviors (epic → feature → story), severity, categories, retries and per-test steps in one self-contained `index.html` (attachments embedded), so it opens by double-click with no server. No trend graphs (an Allure limitation for single-file output). Configuration and rationale: [`docs/reporting/allure.md`](docs/reporting/allure.md). | `npm run report:allure:single` → `allure-report-single/`; downloadable CI artifact |
+| **Monocart report** | Grid of every test with Feature / Story / Severity columns, tags, flaky marks and steps. `zip: true` bundles HTML, JSON and every attachment (screenshots, traces) into one `.zip`. Configuration and rationale: [`docs/reporting/monocart.md`](docs/reporting/monocart.md). | `monocart-report/index.zip` after any run; `npm run report:monocart` to view; downloadable CI artifact |
+| **Release summary** | One page answering "is this build safe to release?": critical-path (`@smoke`) verdict, real failures, flaky tests, scenarios vs browser runs, coverage by feature, what is not automated, trend against earlier runs of the same size, and what was tested. Built from Monocart's data by `scripts/release-summary.js`. | `npm run report:summary` → `release-summary/index.html`; downloadable CI artifact |
 | **GitHub Actions job summary** | Fast visibility, no download. | Actions tab → the run itself |
 | **Teams failure alert** | Push notification, only fires on failure. | Posted to the connected Teams chat |
 
-**Never open a downloaded Allure report by double-clicking `index.html`** — it needs `npx allure open <folder>` (browsers block the background requests it needs when opened from disk). On Azure DevOps specifically, the official `PublishAllureReport@2` task solves this natively by embedding the report as a pipeline tab — see the comment above "Generate Allure Report" in `.github/workflows/playwright.yml`.
+**How the reports are used.** Playwright's HTML report is for developers debugging a failure locally. Allure single-file and Monocart are both kept, deliberately, as the shareable reports (emailable, no server, not tied to a git host) -- each has strengths the other doesn't (Allure: Behaviors tree, descriptions, bug links; Monocart: sortable/searchable columns, a single-file trend, no server needed even for extra features), and picking one over the other hasn't been necessary yet. Any change to what the reports show (tags, steps, build info) is made so it reaches both -- see each report's own file below for exactly how. The release summary is for a reader who needs a decision, not a test list.
 
-**Local Allure trend graphs survive across runs on the same machine.** `npm run report:allure` runs `scripts/generate-allure-report.js`, not a bare `allure generate` -- `allure generate --clean` wipes its output folder every time, which would silently discard the previous report's `history/` folder (exactly what draws the trend graphs) along with it. The script copies that folder forward into `allure-results/history` before generating, so each local run adds a point to the trend instead of resetting it. (This previously ran `allure serve`, which builds into a temp directory and never persisted a report at all -- no history could accumulate.) CI generates fresh each run with no prior history to carry forward; giving CI its own persisted trend would need downloading the previous run's artifact first, which is a larger change than a local dev convenience and is intentionally out of scope here — see [Future Considerations](#future-considerations).
+**Where the information comes from.** Specs stay plain. Everything both reports show is supplied by shared code: `utils/allureTags.ts` (`tagAllure` per `describe` sets epic/feature/story, with severity taken from the `@smoke` title tag, and pushes the same values as Playwright annotations for Monocart; `describeTest` and `linkIssue` add a description and a bug link, Allure-only) and `utils/step.ts` (the `@step` decorator on page-object methods turns each call into a named step such as "Cart: proceed to checkout", read by both reports). Per-report configuration specifics live in their own files, not here: [`docs/reporting/allure.md`](docs/reporting/allure.md) and [`docs/reporting/monocart.md`](docs/reporting/monocart.md).
+
+**Why the folder-based Allure report was removed.** It needed `npx allure open` (browsers block its background requests from disk), and its one advantage, trend graphs, depended on a script that carried `history/` forward on one machine -- kept as a documented, working reference in the separate `allure-reporting-reference` project rather than in this repo. The release summary now provides the trend, comparing only against earlier runs with the same number of browser runs, so partial runs don't distort it. Trend is local to one machine; CI has no earlier runs to compare with, and persisting them (download the previous artifact first) is out of scope for now — see [Future Considerations](#future-considerations).
+
+**Intentional failures.** `@demo` tests fail on purpose (to show how failures look). They are excluded from normal runs (`grepInvert` in `playwright.config.ts`), so they can't fake a red build; run them with `npm run test:demo`.
 
 ## Design Decisions
 
@@ -158,13 +169,26 @@ The connection itself is fast; the origin server takes 10+ seconds just to start
 - Excel + JSON + Faker data strategies, chosen deliberately per case
 - Layered field-validation testing
 - Full API resource lifecycle (CRUD) testing
-- Place Order / checkout flow (TC14-16), authenticated via a cached `storageState` for the shared test user, produced by a Playwright setup project — see [Authenticated Tests](#authenticated-tests)
-- Local Allure trend/history graphs, preserved across runs via `scripts/generate-allure-report.js`
+- Place Order / checkout flow (TC14-16), authenticated via a cached `storageState` for the shared test user, produced in global setup — see [Authenticated Tests](#authenticated-tests)
+- Release summary with local trend, and coverage-gap tracking against the site's documented test cases (`npm run report:summary`, `npm run report:gaps`)
 - Empty-field validation tests (login + signup), kept separate from the credential-value tests in `login.spec.ts` as a distinct concern
+
+**Report clean-up plan (in order):** the reports must answer "is this build safe to release?" -- smoke pass/fail, real failures by severity, coverage vs gaps, trend -- before we pick one.
+1. Stale Allure results cleared each run -- done (`playwright.config.ts`)
+2. `@demo` tests excluded from normal runs -- done (`npm run test:demo` to opt in)
+3. Login setup no longer counts as a test -- done (moved to `config/globalSetup.ts`); scenarios vs browser runs are counted separately on the release summary
+4. Tag every spec with epic / feature / severity -- done (`utils/allureTags.ts`; feeds Allure Behaviors and Monocart columns)
+5. Flaky (passed-on-retry) tests are already flagged by both reports; base URL, configured browsers, framework commit and run type added to both -- done
+6. Failure explanation -- done for now: `describeTest()` on every @smoke test, `linkIssue(id)` to a placeholder tracker URL (`ISSUE_URL` in `utils/allureTags.ts`; demo failures show it), both from the Allure runtime API in `allure-js-commons`. Keep Playwright `test.step` (works in every report) rather than `allure.step`. Steps now come from the `@step` decorator (`utils/step.ts`) on page-object methods, so specs stay plain and new specs get steps for free; `allure.owner` skipped (single maintainer)
+7. Gaps -- draft done: `data/featureInventory.json` holds the site's 26 UI test cases and 14 APIs, each tagged `layer: ui|api`, with hand-kept coverage (full/partial/none) and risk; `npm run report:gaps` lists gaps per layer by risk and fails if a cited spec no longer exists. Risk levels are a first draft to be reviewed. Gap counts and the high-risk gaps appear on the release summary
+8. Trend over time -- done, local only (release summary compares with earlier runs of the same size)
+9. Hide fixture/hook noise -- done for Allure (`detail: false` in playwright.config.ts; Monocart/HTML unaffected). Allure shows only `test.step` steps, which the `@step` page-object decorator now supplies for every spec
+10. Folder-based Allure report removed -- done (script, npm command, CI steps; the technique itself is preserved as a working reference in the separate `allure-reporting-reference` project). Decided: both Allure single-file and Monocart are kept long-term, not narrowed to one -- each documented on its own in [`docs/reporting/allure.md`](docs/reporting/allure.md) / [`docs/reporting/monocart.md`](docs/reporting/monocart.md)
 
 **Parked / deliberately deferred:**
 - CI-side Allure trend history — local history persists on one machine already; giving CI the same trend would mean downloading the previous run's artifact before generating, a larger change than today's local fix
-- Currents (hosted dashboard) or a GitHub Pages dated-archive, as alternatives to Allure
+- Currents (hosted dashboard) — ruled out for this repo specifically: no free tier as of its 2026 pricing revamp (cheapest plan $49/mo), not justifiable without a paying project behind it
+- GitHub Pages / Bitbucket static hosting / Bitbucket's native Tests tab, as report-delivery alternatives — all rejected: GitHub Pages doesn't survive the planned move off GitHub, Bitbucket's static hosting is always public regardless of repo privacy and capped at one site per workspace, and Bitbucket's Tests tab is Standard/Premium-plan-only and shows failures only
 - A real secrets vault, once there's a team and multiple environments
 
 **Explicitly out of scope for this repo:** k6 load testing — deliberately excluded as it runs under a different tool/runtime and belongs in its own separate project, not bolted onto this one.
@@ -176,7 +200,7 @@ The connection itself is fast; the origin server takes 10+ seconds just to start
 - [x] CI pipeline — secrets, cross-browser matrix, job summary, Teams alert, dual reporting
 - [x] Excel, JSON, and Faker data strategies, each used deliberately
 - [x] Place Order / checkout flow
-- [x] Shared test-user session via a Playwright setup project + cached `storageState` for checkout (chromium-only)
+- [x] Shared test-user session via global setup + cached `storageState` for checkout (chromium-only)
 - [x] Allure trend/history retained across local runs
 - [x] Empty-field validation tests (login + signup)
 - [ ] CI-side Allure trend history
