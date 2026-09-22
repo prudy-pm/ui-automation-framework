@@ -1,4 +1,5 @@
 import { Page } from '@playwright/test';
+import { step } from '@utils/step';
 import { BasePage } from './BasePage';
 
 export class CartPage extends BasePage {
@@ -14,10 +15,12 @@ export class CartPage extends BasePage {
     super(page);
   }
 
+  @step
   async expectCartPageLoaded(): Promise<void> {
     await this.expectVisible(this.cartInfoContainer);
   }
 
+  @step
   async proceedToCheckout(): Promise<void> {
     await this.click(this.proceedToCheckoutLink);
   }
@@ -26,22 +29,26 @@ export class CartPage extends BasePage {
     return this.cartInfoContainer.locator('tbody tr', { hasText: productName });
   }
 
+  @step
   async expectProductInCart(productName: string): Promise<void> {
     await this.expectVisible(this.getRowByProductName(productName));
   }
 
+  @step
   async expectProductTotal(productName: string, total: string): Promise<void> {
     const row = this.getRowByProductName(productName);
     await this.expectVisible(row.locator('.cart_total_price', { hasText: total }));
   }
 
+  @step
   async removeProduct(productName: string): Promise<void> {
     const row = this.getRowByProductName(productName);
     await this.click(row.locator('.cart_quantity_delete'));
   }
 
   // Empties the cart, one row at a time -- needed before checkout.spec.ts, whose
-  // shared account's cart carries over between runs (see tests/setup/auth.setup.ts).
+  // shared account's cart carries over between runs (see config/globalSetup.ts).
+  @step
   async clearCart(): Promise<void> {
     await this.goto();
     const rows = this.cartInfoContainer.locator('tbody tr');
@@ -52,10 +59,12 @@ export class CartPage extends BasePage {
     }
   }
 
+  @step
   async expectProductRemoved(productName: string): Promise<void> {
     await this.expectHidden(this.getRowByProductName(productName));
   }
 
+  @step
   async expectProductQuantity(productName: string, quantity: number): Promise<void> {
     const row = this.getRowByProductName(productName);
     await this.expectVisible(row.getByRole('cell', { name: quantity.toString(), exact: true }));

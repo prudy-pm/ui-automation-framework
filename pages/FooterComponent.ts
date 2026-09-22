@@ -1,4 +1,5 @@
 import { Page } from '@playwright/test';
+import { step } from '@utils/step';
 import { BasePage } from './BasePage';
 
 export class FooterComponent extends BasePage {
@@ -11,15 +12,18 @@ export class FooterComponent extends BasePage {
     super(page);
   }
 
+  @step
   async expectSectionVisible(): Promise<void> {
     await this.expectVisible(this.subscriptionHeading);
   }
 
+  @step
   async subscribe(email: string): Promise<void> {
     await this.fill(this.emailInput, email);
     await this.click(this.subscribeButton);
   }
 
+  @step
   async expectSubscriptionSuccess(): Promise<void> {
     await this.expectVisible(this.successMessage);
   }

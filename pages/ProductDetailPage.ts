@@ -1,4 +1,5 @@
 import { Page } from '@playwright/test';
+import { step } from '@utils/step';
 import { BasePage } from './BasePage';
 
 export class ProductDetailPage extends BasePage {
@@ -9,10 +10,12 @@ export class ProductDetailPage extends BasePage {
     super(page);
   }
 
+  @step
   async setQuantity(quantity: number): Promise<void> {
     await this.fill(this.quantityInput, quantity.toString());
   }
 
+  @step
   async addToCart(): Promise<void> {
     await this.click(this.addToCartButton);
   }

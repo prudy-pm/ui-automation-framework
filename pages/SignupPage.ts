@@ -1,4 +1,5 @@
 import { Page } from '@playwright/test';
+import { step } from '@utils/step';
 import { BasePage } from './BasePage';
 
 // Signup lives on the same /login page as LoginPage (automationexercise.com
@@ -17,16 +18,19 @@ export class SignupPage extends BasePage {
     super(page);
   }
 
+  @step
   async submitSignup(name: string, email: string): Promise<void> {
     await this.fill(this.nameInput, name);
     await this.fill(this.emailInput, email);
     await this.click(this.signupButton);
   }
 
+  @step
   async expectNameFieldRejectedByBrowser(): Promise<void> {
     await this.expectFieldInvalid(this.nameInput);
   }
 
+  @step
   async expectEmailFieldRejectedByBrowser(): Promise<void> {
     await this.expectFieldInvalid(this.emailInput);
   }

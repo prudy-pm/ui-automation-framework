@@ -1,4 +1,5 @@
 import { Page } from '@playwright/test';
+import { step } from '@utils/step';
 import { BasePage } from './BasePage';
 
 export type CardDetails = {
@@ -21,6 +22,7 @@ export class PaymentPage extends BasePage {
     super(page);
   }
 
+  @step
   async payWithCard(card: CardDetails): Promise<void> {
     await this.fill(this.nameOnCardInput, card.nameOnCard);
     await this.fill(this.cardNumberInput, card.cardNumber);

@@ -1,4 +1,5 @@
 import { Page } from '@playwright/test';
+import { step } from '@utils/step';
 import { BasePage } from './BasePage';
 
 export class ProductsPage extends BasePage {
@@ -24,19 +25,23 @@ export class ProductsPage extends BasePage {
     super(page);
   }
 
+  @step
   async openViaNav(): Promise<void> {
     await this.click(this.productsNavLink);
   }
 
+  @step
   async searchProduct(name: string): Promise<void> {
     await this.fill(this.searchInput, name);
     await this.click(this.searchButton);
   }
 
+  @step
   async expectResultsVisible(): Promise<void> {
     await this.expectVisible(this.searchResultsHeading);
   }
 
+  @step
   async addFirstResultToCart(): Promise<void> {
     await this.click(this.firstAddToCartLink);
     await this.expectVisible(this.continueShoppingButton);
@@ -48,20 +53,24 @@ export class ProductsPage extends BasePage {
    * for results, add the first match. Repeated identically across
    * cart.spec.ts and productsSearch.spec.ts before being pulled in here.
    */
+  @step
   async searchAndAddFirstToCart(searchTerm: string): Promise<void> {
     await this.searchProduct(searchTerm);
     await this.expectResultsVisible();
     await this.addFirstResultToCart();
   }
 
+  @step
   async continueShopping(): Promise<void> {
     await this.click(this.continueShoppingButton);
   }
 
+  @step
   async goToCartFromModal(): Promise<void> {
     await this.click(this.viewCartLink);
   }
 
+  @step
   async viewProductAt(index: number): Promise<void> {
     await this.click(this.viewProductLinks.nth(index));
   }

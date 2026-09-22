@@ -1,4 +1,5 @@
 import { Page } from '@playwright/test';
+import { step } from '@utils/step';
 import { BasePage } from './BasePage';
 
 export class LoginPage extends BasePage {
@@ -13,10 +14,12 @@ export class LoginPage extends BasePage {
         super(page);
     }
 
+    @step
     async openViaNav(): Promise<void> {
         await this.click(this.loginNavLink);
     }
 
+    @step
     async login(email: string, password: string): Promise<void> {
         await this.fill(this.emailInput, email);
         await this.fill(this.passwordInput, password);
@@ -24,25 +27,30 @@ export class LoginPage extends BasePage {
     }
 
     // Composed flow: go home, open login via nav, submit. Also used once by
-    // tests/setup/auth.setup.ts to log in and cache the session for checkout.spec.ts.
+    // config/globalSetup.ts to log in and cache the session for checkout.spec.ts.
+    @step
     async loginViaNav(email: string, password: string): Promise<void> {
         await this.goto();
         await this.openViaNav();
         await this.login(email, password);
     }
 
+    @step
     async expectLoginErrorVisible(): Promise<void> {
         await this.expectVisible(this.errorMessage);
     }
 
+    @step
     async expectLoggedInSuccessfully(): Promise<void> {
         await this.expectVisible(this.loggedInIndicator);
     }
 
+    @step
     async expectEmailFieldRejectedByBrowser(): Promise<void> {
         await this.expectFieldInvalid(this.emailInput);
     }
 
+    @step
     async expectPasswordFieldRejectedByBrowser(): Promise<void> {
         await this.expectFieldInvalid(this.passwordInput);
     }
