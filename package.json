@@ -11,7 +11,9 @@
     "test:regression": "playwright test --grep @regression",
     "test:demo": "playwright test --grep @demo",
     "report": "playwright show-report",
-    "report:allure": "node scripts/generate-allure-report.js && npx allure open allure-report"
+    "report:allure": "node scripts/generate-allure-report.js && npx allure open allure-report",
+    "report:allure:single": "npx allure generate allure-results --single-file --clean -o allure-report-single",
+    "report:monocart": "npx monocart show-report monocart-report/index.html"
   },
   "keywords": [],
   "author": "",
@@ -25,6 +27,7 @@
     "allure-commandline": "^2.43.0",
     "allure-playwright": "^3.12.1",
     "dotenv": "^17.4.2",
+    "monocart-reporter": "^2.13.1",
     "xlsx": "https://cdn.sheetjs.com/xlsx-latest/xlsx-latest.tgz"
   }
 }

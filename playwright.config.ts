@@ -36,6 +36,25 @@ export default defineConfig({
     ['html'],
     ['@estruyf/github-actions-reporter'],
     ['allure-playwright', { resultsDir: 'allure-results' }],
+    /* Trial: evaluating this against Allure for step-level detail + easy
+     * sharing -- see README Reporting section. Kept alongside Allure long
+     * term, not a replacement -- each has strengths the other doesn't.
+     * `zip: true` also bundles attachments into one .zip alongside the
+     * HTML. `trend` self-references this run's own previous index.json --
+     * confirmed via source (lib/index.js) that trends are read before the
+     * output dir is cleaned, so this accumulates across runs without a
+     * carry-forward script (unlike Allure's history/ folder). */
+    ['monocart-reporter', {
+      name: 'UI Automation Framework Report',
+      outputFile: 'monocart-report/index.html',
+      zip: true,
+      trend: './monocart-report/index.json',
+      tags: {
+        smoke: { background: '#0B7A3D' },
+        regression: { background: '#0B5FA3' },
+        demo: { background: '#B36B00' },
+      },
+    }],
   ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
