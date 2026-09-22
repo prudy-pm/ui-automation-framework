@@ -13,8 +13,10 @@ In `playwright.config.ts`:
   outputFile: 'monocart-report/index.html',
   zip: true,
   trend: './monocart-report/index.json',
-  visitor: (data, metadata) => { /* copies epic/feature/story/severity annotations onto each row */ },
-  columns: (defaultColumns) => { /* inserts Feature, Story, Severity columns before Duration */ },
+  visitor: (data, metadata) => { /* copies epic/feature/story/severity annotations onto each row;
+                                     drops the internal "Allure Metadata" attachment */ },
+  columns: (defaultColumns) => { /* drops expectedStatus/status/annotations; inserts
+                                     Epic, Feature, Story, Severity columns before Duration */ },
   tags: { smoke: {...}, regression: {...}, demo: {...} }, // colours the title tags in the grid
 }],
 ```
@@ -31,9 +33,16 @@ In `playwright.config.ts`:
   Playwright's own `test.info().annotations`. `utils/allureTags.ts`'s `tagAllure()` pushes
   `epic`/`feature`/`story`/`severity` as annotations (in addition to calling Allure's own API), and this
   `visitor` function copies those annotations onto each row's `data`, which the `columns` function below then
-  displays.
-- **`columns`** — inserts **Feature**, **Story** and **Severity** as searchable, sortable grid columns (before
-  the built-in Duration column), populated from what `visitor` copied in.
+  displays. It also strips the "Allure Metadata (metadata)" attachment(s) allure-playwright sends itself via
+  Playwright's own attachment mechanism (`contentType: 'application/vnd.allure.message+json'`, confirmed by
+  inspecting a real report's data) -- internal bookkeeping, not something a reader would ever want to open.
+- **`columns`** — drops three of Monocart's default columns, confirmed dead weight by inspecting real report
+  data: **expectedStatus** (constant `'passed'` on every row in this suite -- nothing uses `test.fail()` or
+  `test.fixme()`), **status** (duplicates **outcome** on every passing row), and **annotations** (superseded by
+  the columns below). Inserts **Epic**, **Feature**, **Story** and **Severity** as searchable, sortable grid
+  columns (before the built-in Duration column), populated from what `visitor` copied in. Must mutate the
+  `defaultColumns` array in place -- confirmed via Monocart's source (`lib/visitor.js`) that this handler's
+  return value is discarded.
 - **`metadata`** (top-level `playwright.config.ts` option, not inside the reporter block) — Monocart's own
   "which build was tested" surface: reads the same `buildInfo` object (base URL, framework commit, configured
   browsers, run type) shown on the report as key/value pairs.
