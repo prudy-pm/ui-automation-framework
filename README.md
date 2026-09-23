@@ -104,11 +104,10 @@ npm run report:archive       # copy the current reports to reports-archive/<date
 
 ## How It's Built
 
-- **Page Object Model + API client pattern**, both extending shared base classes. Shared, cross-page UI elements (e.g. the footer) become their own **component**, not duplicated per page.
-- **Fixtures over manual instantiation** — Playwright/TypeScript's idiomatic approach. Gives tests dependency injection (declare what you need, not how it's built), automatic per-test setup/teardown (`apiFixtures.ts` disposes its `APIRequestContext` after every test with no spec having to remember to), and composability. The `page` fixture override in `pageFixtures.ts` is a concrete example: every test automatically gets ad-domains blocked, with zero tests aware it's happening.
-- **Test data is chosen deliberately per case, not by one default:** Excel for the one case a non-technical stakeholder might realistically edit (`data/productSearchTerms.xlsx`); JSON for anything nested/structural (account profiles, scenario metadata); **Faker** for anything that must never be predictable — credentials, subscription emails, generated at runtime instead of committed, so nothing plausible-looking ever sits permanently in git history.
-- **Validation is tested per layer, not per field** — browser, server, and business-rule rejections are separate tests, so one layer's failure can never mask another's.
-- **Explore before asserting.** Where a response shape or API contract wasn't already confirmed (e.g. `updateAccount`'s required HTTP method), a temporary exploratory test logged the real response first — assertions were written from evidence, not assumptions.
+- **pages/ and api/ mirror each other** — every page object extends `BasePage`, every API client extends `BaseApiClient`, so the same pattern applies whether a spec is driving the browser or calling the API directly.
+- **fixtures/ wires it all into tests** — `pageFixtures.ts` and `apiFixtures.ts` inject page objects/API clients via Playwright's fixture system (declare what a test needs, not how it's built), instead of each spec constructing them by hand.
+- **`data/` vs `reporting/data/`** — `data/` holds test input (JSON, one Excel file, Faker-generated at runtime for anything that must stay unpredictable); `reporting/data/featureInventory.json` is a separate, hand-kept coverage record, not test input.
+- **`utils/` vs reporting-specific code** — shared helpers (faker wrappers, `excelData`, `accountFactory`) sit alongside the two reporting-tagging files (`allureTags.ts`, `step.ts`), which are used across every spec and page object despite `reporting/` existing as its own folder.
 
 ### Authenticated Tests
 
