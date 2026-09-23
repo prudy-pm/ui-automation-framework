@@ -1,7 +1,9 @@
 import dotenv from 'dotenv';
 import path from 'path';
 
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+// quiet: true -- dotenv v17+ otherwise prints a random unsolicited promo "tip" (dotenvx.com, vestauth.com)
+// on every run, including CI logs. Confirmed via dotenv's own source: gated by exactly this option.
+dotenv.config({ path: path.resolve(__dirname, '../.env'), quiet: true });
 
 function required(key: string): string {
     const value = process.env[key];
