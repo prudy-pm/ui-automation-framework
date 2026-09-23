@@ -2,7 +2,7 @@
 /**
  * Builds release-summary/index.html: a one-page answer to "is this build safe
  * to release?", from the last run's Monocart data (monocart-report/index.json)
- * and the hand-kept coverage list (data/featureInventory.json).
+ * and the hand-kept coverage list (reporting/data/featureInventory.json).
  *
  * Definitions, so the numbers are read the same way every time:
  *  - critical path  = tests tagged @smoke
@@ -13,9 +13,9 @@
 const fs = require('fs');
 const path = require('path');
 
-const rootDir = path.resolve(__dirname, '..');
+const rootDir = path.resolve(__dirname, '..', '..');
 const report = JSON.parse(fs.readFileSync(path.join(rootDir, 'monocart-report', 'index.json'), 'utf8'));
-const inventory = JSON.parse(fs.readFileSync(path.join(rootDir, 'data', 'featureInventory.json'), 'utf8'));
+const inventory = JSON.parse(fs.readFileSync(path.join(rootDir, 'reporting', 'data', 'featureInventory.json'), 'utf8'));
 
 const stripAnsi = (text) => String(text).replace(/\u001b\[[0-9;]*m/g, '');
 const escapeHtml = (text) => String(text).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -149,7 +149,7 @@ ${count(scenarioList, 'flaky')
 <div class="scroll">${table(['Feature', 'Scenarios', 'Passed', 'Failed', 'Flaky'], Object.entries(byFeature).sort().map(([name, f]) => [escapeHtml(name), f.scenarios, f.passed, f.failed, f.flaky]))}</div>
 
 <h2>What is not automated</h2>
-<p class="small">From the site's documented cases (data/featureInventory.json, kept by hand): UI ${gapCounts('ui').full} of ${gapCounts('ui').total} fully automated (${gapCounts('ui').partial} partial); API ${gapCounts('api').full} of ${gapCounts('api').total} (${gapCounts('api').partial} partial).</p>
+<p class="small">From the site's documented cases (reporting/data/featureInventory.json, kept by hand): UI ${gapCounts('ui').full} of ${gapCounts('ui').total} fully automated (${gapCounts('ui').partial} partial); API ${gapCounts('api').full} of ${gapCounts('api').total} (${gapCounts('api').partial} partial).</p>
 ${highGaps.length ? table(['Case', 'Layer', 'Coverage', 'Note'], highGaps.map((g) => [escapeHtml(`${g.id} ${g.title}`), g.layer.toUpperCase(), g.coverage, escapeHtml(g.note || '')])) : ''}
 <p class="small">High-risk gaps shown; run <code>npm run report:gaps</code> for the full list.</p>
 

@@ -18,7 +18,7 @@ Allure history/trend-preservation technique (not used in this repo any more — 
   stale earlier run's results never leak into this run's report.
 - **`environmentInfo: buildInfo`** — writes `allure-results/environment.properties` with the same build info
   Monocart gets (base URL, framework commit, configured browsers, run type). See "What was tested" on the
-  [release summary](../../scripts/release-summary.js) and `buildInfo` in `playwright.config.ts` for where these
+  [release summary](../scripts/release-summary.js) and `buildInfo` in `playwright.config.ts` for where these
   values come from.
 - **`detail: false`** — Allure's own option to hide fixture/hook/raw-action steps and show only `test.step`
   steps. Every page-object method is wrapped in a named step by the `@step` decorator (`utils/step.ts`), so in
@@ -42,7 +42,7 @@ generate --clean` otherwise wipes that folder, discarding history, and `allure s
 at all). That report and script were **removed**: it needed `npx allure open` to view (browsers block a
 folder report's background `fetch()` calls from `file://`), and its only real advantage over the single-file
 report — trend graphs — was local-machine-only and is now covered by the
-[release summary](../../scripts/release-summary.js)'s trend section instead, which additionally compares only
+[release summary](../scripts/release-summary.js)'s trend section instead, which additionally compares only
 runs with the same number of browser runs (the old Allure trend didn't distinguish a full run from a filtered
 one). The carry-forward technique itself is preserved as a working, documented example in the separate
 [`allure-reporting-reference`](../../../allure-reporting-reference) project, in case a future project wants
@@ -53,7 +53,7 @@ folder-based Allure with trend graphs again.
 - **Behaviors tab (epic → feature → story) + severity** — `tagAllure({ epic, feature, story })`, called once per
   `test.describe` from `utils/allureTags.ts`. Severity is derived automatically from the title tag: `@smoke` →
   `critical`, everything else → `normal`. This is also what pushes matching Playwright *annotations*
-  (`epic`/`feature`/`story`/`severity`) that Monocart's `visitor` reads — see `docs/reporting/monocart.md` — so
+  (`epic`/`feature`/`story`/`severity`) that Monocart's `visitor` reads — see `reporting/docs/monocart.md` — so
   the two reports agree.
 - **Test description** — `describeTest('...')`, a one-line plain-English statement of what the test proves.
   Currently only on the `@smoke` tests.

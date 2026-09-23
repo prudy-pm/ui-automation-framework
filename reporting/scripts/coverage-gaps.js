@@ -3,14 +3,14 @@
  * Prints what is and isn't automated, per layer (ui / api), against the site's
  * documented cases -- 26 UI test cases (https://automationexercise.com/test_cases)
  * and 14 APIs (https://automationexercise.com/api_list) -- kept by hand in
- * data/featureInventory.json. Also fails if the inventory cites a spec file
+ * reporting/data/featureInventory.json. Also fails if the inventory cites a spec file
  * that no longer exists, so the list can't quietly drift out of date.
  */
 const fs = require('fs');
 const path = require('path');
 
-const rootDir = path.resolve(__dirname, '..');
-const inventory = JSON.parse(fs.readFileSync(path.join(rootDir, 'data', 'featureInventory.json'), 'utf8'));
+const rootDir = path.resolve(__dirname, '..', '..');
+const inventory = JSON.parse(fs.readFileSync(path.join(rootDir, 'reporting', 'data', 'featureInventory.json'), 'utf8'));
 
 const missing = inventory.flatMap((item) => item.specs.filter((spec) => !fs.existsSync(path.join(rootDir, spec)))
   .map((spec) => `${item.id} cites ${spec}, which does not exist`));

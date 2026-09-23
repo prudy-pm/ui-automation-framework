@@ -24,7 +24,7 @@ In `playwright.config.ts`:
 - **`zip: true`** — bundles the HTML, its JSON data, and every attachment (screenshots, trace files) into one
   `monocart-report/index.zip`. Confirmed by inspection to be a genuine single-file artifact — safe to email or
   drop in a chat, unlike the folder-based Allure report this project used to also generate (see
-  `docs/reporting/allure.md`).
+  `reporting/docs/allure.md`).
 - **`trend: './monocart-report/index.json'`** — self-references this run's own previous `index.json`. Confirmed
   via Monocart's source (`lib/index.js`) that trend data is read *before* the output directory is cleaned, so
   this accumulates across local runs with no carry-forward script needed (unlike Allure's `history/` folder,
@@ -73,17 +73,17 @@ machine while the server runs — to share the report itself, send `monocart-rep
   has no `detail: false`-equivalent option to hide fixture/hook steps the way Allure does — its tree still shows
   `Before Hooks`/`Fixture "..."` entries alongside the named `@step` ones.
 - **Flaky detection** — built in (`caseType: 'flaky'` when a retry passed after an earlier attempt failed), used
-  directly by `scripts/release-summary.js` to build the flaky-tests section of the release summary.
+  directly by `reporting/scripts/release-summary.js` to build the flaky-tests section of the release summary.
 - **`@demo` tests are excluded** from normal runs (`grepInvert` in `playwright.config.ts`); run them via `npm
   run test:demo`.
 
 ## Feeds the release summary
 
-`scripts/release-summary.js` reads `monocart-report/index.json` directly (not Allure's results) to build
+`reporting/scripts/release-summary.js` reads `monocart-report/index.json` directly (not Allure's results) to build
 `release-summary/index.html` — the scenario/browser-run counts, the flaky and failure tables, the per-feature
 coverage table, and the trend section (comparing only against earlier runs with the same number of browser
 runs, using Monocart's own `trends` array from the same file) all come from here. See
-[`../../scripts/release-summary.js`](../../scripts/release-summary.js).
+[`../scripts/release-summary.js`](../scripts/release-summary.js).
 
 ## Where it's generated in CI
 
