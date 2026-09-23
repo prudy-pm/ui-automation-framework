@@ -1,12 +1,14 @@
 import { test } from '@playwright/test';
-import { description, epic, feature, story, severity, issue } from 'allure-js-commons';
+import { description, epic, feature, story, severity, layer, issue } from 'allure-js-commons';
 
 type AllureTags = { epic: string; feature: string; story: string };
 
-// Call once inside a test.describe: every test in it gets these Allure labels
-// (they drive the report's Behaviors tab). Severity comes from the title tag --
-// @smoke = critical, everything else = normal -- so it stays in step with what
-// is already treated as the release-critical set.
+// Derived from the spec's own path (tests/api vs tests/ui), not passed per describe, so it can't drift.
+function deriveLayer(specFile: string): 'API' | 'UI' {
+  return /[\\/]tests[\\/]api[\\/]/.test(specFile) ? 'API' : 'UI';
+}
+
+// Call once inside a test.describe: every test in it gets these labels. Severity follows the @smoke title tag.
 export function tagAllure(tags: AllureTags): void {
   test.beforeEach(async () => {
     await epic(tags.epic);
@@ -14,14 +16,16 @@ export function tagAllure(tags: AllureTags): void {
     await story(tags.story);
     const level = test.info().title.includes('@smoke') ? 'critical' : 'normal';
     await severity(level);
+    const layerValue = deriveLayer(test.info().file);
+    await layer(layerValue);
 
-    // Same values as Playwright annotations: Monocart (visitor + columns in
-    // playwright.config.ts) and the Playwright HTML report read these.
+    // Same values pushed as Playwright annotations, which Monocart (playwright.config.ts) reads.
     test.info().annotations.push(
       { type: 'epic', description: tags.epic },
       { type: 'feature', description: tags.feature },
       { type: 'story', description: tags.story },
       { type: 'severity', description: level },
+      { type: 'layer', description: layerValue },
     );
   });
 }

@@ -131,13 +131,13 @@ test.use({ storageState: AUTH_FILE });
 |---|---|---|
 | **Playwright HTML report** | Fast, built-in, single-run diagnostics: screenshots, traces, timelines on failure. A snapshot of the last run only — Playwright overwrites `playwright-report/` every time. | `npm run report`; downloadable CI artifact |
 | **Allure single-file report** | Suites, behaviors (epic → feature → story), severity, categories, retries and per-test steps in one self-contained `index.html` (attachments embedded), opens by double-click with no server. Configuration and rationale: [`reporting/docs/allure.md`](reporting/docs/allure.md). | `npm run report:allure:single` → `allure-report-single/`; downloadable CI artifact |
-| **Monocart report** | Grid of every test with Feature / Story / Severity columns, tags, flaky marks and steps, all searchable/sortable. `zip: true` bundles HTML, JSON and every attachment into one `.zip`. Configuration and rationale: [`reporting/docs/monocart.md`](reporting/docs/monocart.md). | `monocart-report/index.zip` after any run; `npm run report:monocart` to view; downloadable CI artifact |
+| **Monocart report** | Grid of every test with Layer / Epic / Feature / Story / Severity columns, tags, flaky marks and steps, all searchable/sortable. `zip: true` bundles HTML, JSON and every attachment into one `.zip`. Configuration and rationale: [`reporting/docs/monocart.md`](reporting/docs/monocart.md). | `monocart-report/index.zip` after any run; `npm run report:monocart` to view; downloadable CI artifact |
 | **Release summary** | One page answering "is this build safe to release?": critical-path (`@smoke`) verdict, real failures, flaky tests, coverage by feature, gaps, and trend against earlier runs of the same size. | `npm run report:summary` → `release-summary/index.html`; downloadable CI artifact |
 | **Teams failure alert** | Push notification, only fires on failure. | Posted to the connected Teams chat |
 
 **How the reports are used.** Both Allure single-file and Monocart are kept, deliberately, as the shareable reports (emailable, no server, not tied to a git host) — each has strengths the other doesn't (Allure: Behaviors tree, descriptions, bug links; Monocart: sortable/searchable columns, a single-file trend). Any change to what the reports show is made so it reaches both — see each report's own file for exactly how.
 
-**Where the information comes from.** Specs stay plain. `utils/allureTags.ts` (`tagAllure` per `describe` sets epic/feature/story/severity, and pushes the same values as Playwright annotations for Monocart) and `utils/step.ts` (the `@step` decorator on page-object methods turns each call into a named step, read by both reports) supply everything both reports show.
+**Where the information comes from.** Specs stay plain. `utils/allureTags.ts` (`tagAllure` per `describe` sets epic/feature/story/severity, layer derived automatically from the spec's path, and pushes the same values as Playwright annotations for Monocart) and `utils/step.ts` (the `@step` decorator on page-object methods turns each call into a named step, read by both reports) supply everything both reports show.
 
 ## Troubleshooting
 

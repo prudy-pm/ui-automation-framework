@@ -50,11 +50,13 @@ folder-based Allure with trend graphs again.
 
 ## What feeds Allure's content
 
-- **Behaviors tab (epic → feature → story) + severity** — `tagAllure({ epic, feature, story })`, called once per
-  `test.describe` from `utils/allureTags.ts`. Severity is derived automatically from the title tag: `@smoke` →
-  `critical`, everything else → `normal`. This is also what pushes matching Playwright *annotations*
-  (`epic`/`feature`/`story`/`severity`) that Monocart's `visitor` reads — see `reporting/docs/monocart.md` — so
-  the two reports agree.
+- **Behaviors tab (epic → feature → story) + severity + layer** — `tagAllure({ epic, feature, story })`, called
+  once per `test.describe` from `utils/allureTags.ts`. Severity is derived automatically from the title tag:
+  `@smoke` → `critical`, everything else → `normal`. `layer` (Allure's own `LabelName.LAYER`, not a custom
+  label) is derived automatically too, from the spec file's own path (`tests/api/` → `API`, everything else →
+  `UI`) — not passed per `describe`, so a spec's layer can't drift out of sync with where it actually lives.
+  This is also what pushes matching Playwright *annotations* (`epic`/`feature`/`story`/`severity`/`layer`) that
+  Monocart's `visitor` reads — see `reporting/docs/monocart.md` — so the two reports agree.
 - **Test description** — `describeTest('...')`, a one-line plain-English statement of what the test proves.
   Currently only on the `@smoke` tests.
 - **Bug links** — `linkIssue(id)` calls `allure.issue()` under a placeholder tracker URL (`ISSUE_URL` in
