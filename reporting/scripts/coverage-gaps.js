@@ -1,10 +1,8 @@
 #!/usr/bin/env node
 /**
- * Prints what is and isn't automated, per layer (ui / api), against the site's
- * documented cases -- 26 UI test cases (https://automationexercise.com/test_cases)
- * and 14 APIs (https://automationexercise.com/api_list) -- kept by hand in
- * reporting/data/featureInventory.json. Also fails if the inventory cites a spec file
- * that no longer exists, so the list can't quietly drift out of date.
+ * Prints what is/isn't automated, per layer, against reporting/data/featureInventory.json --
+ * hand-kept vs the site's documented cases (automationexercise.com/test_cases and /api_list).
+ * Fails if it cites a spec file that no longer exists.
  */
 const fs = require('fs');
 const path = require('path');

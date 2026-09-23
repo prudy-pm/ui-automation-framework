@@ -10,11 +10,7 @@ export class ProductsPage extends BasePage {
   private readonly searchResultsHeading = this.page.getByText('Searched Products', { exact: false });
   private readonly viewProductLinks = this.page.getByRole('link', { name: /View Product/ });
 
-  // Each product card renders two "Add to cart" matches in the DOM (confirmed via codegen);
-  // the second match per card is the always-visible, clickable button.
-
-  //  private readonly firstAddToCartLink = this.page.getByText('Add to cart').first();
-
+  // Each product card renders two "Add to cart" matches; this is the always-visible, clickable one.
   private readonly firstAddToCartLink = this.page.locator('.productinfo a.add-to-cart').first();
 
   private readonly continueShoppingButton = this.page.getByRole('button', { name: 'Continue Shopping' });
@@ -47,12 +43,7 @@ export class ProductsPage extends BasePage {
     await this.expectVisible(this.continueShoppingButton);
   }
 
-  /**
-   * Composed flow used by every test that needs "a product in the cart"
-   * as a precondition rather than as the thing under test: search, wait
-   * for results, add the first match. Repeated identically across
-   * cart.spec.ts and productsSearch.spec.ts before being pulled in here.
-   */
+  // Composed flow for tests that need "a product in the cart" as a precondition, not as the thing under test.
   @step
   async searchAndAddFirstToCart(searchTerm: string): Promise<void> {
     await this.searchProduct(searchTerm);

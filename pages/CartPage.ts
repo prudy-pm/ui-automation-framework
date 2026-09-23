@@ -4,10 +4,7 @@ import { BasePage } from './BasePage';
 
 export class CartPage extends BasePage {
   private readonly cartInfoContainer = this.page.locator('#cart_info');
-  // Not a role-based locator: this <a> has no href (navigation is JS-driven
-  // so the site can check login state first), so Chrome's accessibility
-  // tree doesn't expose it with the `link` role -- confirmed by inspecting
-  // the live DOM after getByRole('link', ...) failed to match it.
+  // Not role-based: this <a> has no href (nav is JS-driven), so it has no accessible `link` role.
   private readonly proceedToCheckoutLink = this.page.locator('a.check_out');
   protected readonly defaultPath = '/view_cart';
 
@@ -46,8 +43,7 @@ export class CartPage extends BasePage {
     await this.click(row.locator('.cart_quantity_delete'));
   }
 
-  // Empties the cart, one row at a time -- needed before checkout.spec.ts, whose
-  // shared account's cart carries over between runs (see config/globalSetup.ts).
+  // Needed before checkout: the shared account's cart carries over between runs.
   @step
   async clearCart(): Promise<void> {
     await this.goto();

@@ -4,10 +4,7 @@ import { env } from '@config/env';
 import { generateRandomEmail, generateRandomPassword } from '@utils/helpers';
 import loginScenarios from '@data/loginScenarios.json';
 
-// Scenario metadata (which case, which data source) is committed -- it's
-// not sensitive. The actual email/password values are generated at test
-// time, so nothing predictable about real or plausible-looking credentials
-// ever sits permanently in git history.
+// Only scenario metadata is committed; actual credentials are generated at test time, never predictable.
 function resolveCredentials(source: string): { email: string; password: string } {
   switch (source) {
     case 'validEmailWrongPassword':
@@ -19,14 +16,9 @@ function resolveCredentials(source: string): { email: string; password: string }
   }
 }
 
-// Trace off for this whole file: the @smoke test below submits the real
-// env.testUser.password via the UI, and trace: 'on-first-retry'
-// (playwright.config.ts) would otherwise capture that login POST body in
-// plaintext into a CI-uploaded report artifact if this test ever flakes
-// and retries. The other tests below never use the real password
-// (faker-generated), so losing their trace on retry costs nothing. Must be
-// top-level in the file (not inside describe) -- Playwright rejects
-// test.use({ trace }) in a describe group since it forces a new worker.
+// Trace off: the @smoke test below submits the real password, and trace: 'on-first-retry' would otherwise
+// capture it in a CI-uploaded artifact on a flaky retry. Must be top-level, not inside describe (Playwright
+// rejects test.use({ trace }) there -- it forces a new worker).
 test.use({ trace: 'off' });
 
 test.describe('Login', () => {

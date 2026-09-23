@@ -20,9 +20,8 @@ export type NewAccountDetails = {
   mobile_number: string;
 };
 
-// Field names here (first_name, last_name, birth_day) intentionally differ
-// from NewAccountDetails' input names (firstname, lastname, birth_date)
-// AutomationExercise's own API is inconsistent between what it accepts and what it returns.
+// Field names (first_name, birth_day, ...) intentionally differ from NewAccountDetails -- the API itself is
+// inconsistent between what it accepts and what it returns.
 export type UserDetailResponse = {
   responseCode: number;
   user: {

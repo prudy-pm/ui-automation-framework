@@ -1,22 +1,10 @@
 import { Page, Locator, expect } from '@playwright/test';
 
-/**
- * BasePage holds actions and behaviour shared by every page object.
- * Individual page classes extend this and define their own locators,
- * rather than repeating click/fill/wait logic in every page.
- */
+// Shared actions/behaviour for every page object; subclasses add their own locators.
 export class BasePage {
     readonly page: Page;
 
-    /**
-     * The path `goto()` navigates to when called with no argument. '/' by
-     * default; a subclass overrides it with a field, e.g.
-     * `protected readonly defaultPath = '/products';` -- not a `goto()`
-     * override. CartPage, ProductsPage, and CheckoutPage previously each
-     * redeclared an identical `goto()` body just to change this one
-     * string; centralizing it here means the domcontentloaded navigation
-     * logic below now has exactly one place to live, too.
-     */
+    // Override via a field in a subclass (e.g. `protected readonly defaultPath = '/products';'), not a goto() override.
     protected readonly defaultPath: string = '/';
 
     constructor(page: Page) {
@@ -24,13 +12,8 @@ export class BasePage {
     }
 
     async goto(path: string = this.defaultPath): Promise<void> {
-        // 'domcontentloaded' instead of Playwright's default 'load':
-        // confirmed via a direct curl that this site's TTFB alone runs
-        // 10+ seconds, and 'load' additionally blocks on every image,
-        // font, and third-party ad iframe finishing -- none of which any
-        // test ever touches. Every subsequent action (click/fill) still
-        // auto-waits for its own target element regardless, so this loses
-        // no real safety while cutting a lot of unnecessary wait time.
+        // 'domcontentloaded' not 'load': this site's slow, and 'load' waits on every image/ad iframe too.
+        // Actions still auto-wait for their own target, so no real safety is lost.
         await this.page.goto(path, { waitUntil: 'domcontentloaded' });
     }
 

@@ -1,12 +1,7 @@
 import * as XLSX from 'xlsx';
 import path from 'path';
 
-/**
- * Reads an Excel sheet (relative to the project root) into an array of
- * plain objects, one per row, keyed by the header row's column names.
- * Used where test data benefits from being editable by non-technical
- * stakeholders (e.g. a BA updating search terms) without touching JSON.
- */
+// Reads an Excel sheet into an array of objects, one per row, keyed by the header row.
 export function readExcelSheet<T extends Record<string, unknown>>(
   relativePath: string,
   sheetName?: string

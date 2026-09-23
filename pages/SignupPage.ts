@@ -2,11 +2,8 @@ import { Page } from '@playwright/test';
 import { step } from '@utils/step';
 import { BasePage } from './BasePage';
 
-// Signup lives on the same /login page as LoginPage (automationexercise.com
-// renders both forms side by side under one URL) but is modeled as its own
-// page object rather than folded into LoginPage -- signup is a distinct
-// feature, not an implementation detail of login, the same reasoning that
-// keeps FooterComponent its own component despite living inside every page.
+// Shares the /login URL with LoginPage (both forms render on one page) but is its own page object -- signup
+// is a distinct feature, not an implementation detail of login.
 export class SignupPage extends BasePage {
   protected readonly defaultPath = '/login';
 

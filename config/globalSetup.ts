@@ -24,10 +24,8 @@ export default async function globalSetup(): Promise<void> {
   await saveTestUserSession();
 }
 
-// Logs in once as the shared env.testUser and saves the session to AUTH_FILE;
-// checkout.spec.ts reuses it via test.use({ storageState: AUTH_FILE }). Done
-// here, not as a test, so it doesn't show up in reports as a scenario.
-// Retried once: the live site's origin is slow and occasionally resets connections.
+// Logs in once, saves the session for checkout.spec.ts to reuse. Run here, not as a test, so it doesn't
+// show up in reports as a scenario. Retried once -- the live site occasionally resets connections.
 async function saveTestUserSession(): Promise<void> {
   expect.configure({ timeout: 10_000 });
   const browser = await chromium.launch();

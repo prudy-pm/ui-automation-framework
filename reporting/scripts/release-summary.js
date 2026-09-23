@@ -1,13 +1,11 @@
 #!/usr/bin/env node
 /**
- * Builds release-summary/index.html: a one-page answer to "is this build safe
- * to release?", from the last run's Monocart data (monocart-report/index.json)
- * and the hand-kept coverage list (reporting/data/featureInventory.json).
+ * Builds release-summary/index.html from monocart-report/index.json and
+ * reporting/data/featureInventory.json.
  *
- * Definitions, so the numbers are read the same way every time:
- *  - critical path  = tests tagged @smoke
- *  - scenario       = one test as written; a browser run = that scenario in one browser
- *  - real failure   = a run that failed on every attempt; flaky = failed, then passed on retry
+ * Terms used below: critical path = tests tagged @smoke; scenario = one test
+ * as written, a browser run = that scenario in one browser; real failure =
+ * failed on every attempt, flaky = failed then passed on retry.
  */
 const fs = require('fs');
 const path = require('path');
