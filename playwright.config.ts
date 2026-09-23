@@ -35,9 +35,6 @@ export default defineConfig({
   testDir: './tests',
   /* Shown as key/values in the Monocart report (see also environmentInfo on the Allure reporter). */
   metadata: buildInfo,
-  /* @demo tests fail on purpose (to show how failures look in reports), so
-   * they are excluded from normal runs. Opt in with `npm run test:demo`. */
-  grepInvert: process.env.RUN_DEMO ? undefined : /@demo/,
   /* Pre-flight catalog check + test-user login -- see config/globalSetup.ts. */
   globalSetup: require.resolve('./config/globalSetup'),
   /* Run tests in files in parallel */
@@ -143,7 +140,6 @@ export default defineConfig({
       tags: {
         smoke: { background: '#0B7A3D' },
         regression: { background: '#0B5FA3' },
-        demo: { background: '#B36B00' },
       },
     }],
   ],

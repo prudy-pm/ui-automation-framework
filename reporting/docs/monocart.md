@@ -17,7 +17,7 @@ In `playwright.config.ts`:
                                      drops the internal "Allure Metadata" attachment */ },
   columns: (defaultColumns) => { /* drops expectedStatus/status/annotations; inserts
                                      Epic, Feature, Story, Severity columns before Duration */ },
-  tags: { smoke: {...}, regression: {...}, demo: {...} }, // colours the title tags in the grid
+  tags: { smoke: {...}, regression: {...} }, // colours the title tags in the grid
 }],
 ```
 
@@ -66,7 +66,7 @@ machine while the server runs — to share the report itself, send `monocart-rep
 
 - **Feature / Story / Severity columns** — see `visitor`/`columns` above; same source of truth as Allure's
   Behaviors tab (`tagAllure()` in `utils/allureTags.ts`), so the two reports never disagree.
-- **Tags** (`@smoke`, `@regression`, `@demo`) — Playwright's own title tags, coloured via the `tags` option.
+- **Tags** (`@smoke`, `@regression`) — Playwright's own title tags, coloured via the `tags` option.
 - **Steps** — the `@step` method decorator on page objects (`utils/step.ts`) shows up the same way it does in
   Allure: named steps per page-object method call, e.g. "Cart: proceed to checkout", nested if one method calls
   another (e.g. `searchAndAddFirstToCart` shows its own search/expect/add sub-steps nested inside it). Monocart
@@ -74,8 +74,6 @@ machine while the server runs — to share the report itself, send `monocart-rep
   `Before Hooks`/`Fixture "..."` entries alongside the named `@step` ones.
 - **Flaky detection** — built in (`caseType: 'flaky'` when a retry passed after an earlier attempt failed), used
   directly by `reporting/scripts/release-summary.js` to build the flaky-tests section of the release summary.
-- **`@demo` tests are excluded** from normal runs (`grepInvert` in `playwright.config.ts`); run them via `npm
-  run test:demo`.
 
 ## Feeds the release summary
 

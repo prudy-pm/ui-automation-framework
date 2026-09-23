@@ -23,8 +23,7 @@ ui-automation-framework/
 │   │   ├── cart/                      # add/remove/price, quantity (JSON-driven)
 │   │   ├── checkout/                   # full flow, chromium-only, shared session
 │   │   └── newsletter/                  # home + cart pages (Faker-driven)
-│   ├── api/                              # products, account CRUD lifecycle, layered validation
-│   └── demo/                              # intentional-failure tests -- `npm run test:demo` only
+│   └── api/                              # products, account CRUD lifecycle, layered validation
 ├── pages/                                  # Page Object Model classes, all extending BasePage
 │   └── FooterComponent.ts                   # shared, cross-page component
 ├── api/                                      # API client classes, all extending BaseApiClient
@@ -35,8 +34,7 @@ ui-automation-framework/
 │                                                    allureTags.ts (report tagging), step.ts (@step decorator)
 ├── reporting/                                      # everything specific to Allure/Monocart reporting
 │   ├── docs/                                         # allure.md, monocart.md -- config & rationale
-│   ├── scripts/                                       # release-summary.js, coverage-gaps.js,
-│   │                                                     archive-reports.js, run-demo.js
+│   ├── scripts/                                       # release-summary.js, coverage-gaps.js, archive-reports.js
 │   └── data/featureInventory.json                      # hand-kept coverage list, vs the site's documented cases
 ├── .env.example
 ├── tsconfig.json                                        # @pages/@fixtures/@config/@data/@utils/@api aliases
@@ -88,7 +86,6 @@ npm run report:monocart      # open the Monocart report
 npm run report:summary       # one-page release-readiness summary of the last run
 npm run report:gaps          # what is / is not automated, vs the site's documented cases
 npm run report:archive       # copy the current reports to reports-archive/<date>/
-npm run test:demo            # the intentional-failure demo tests (excluded from normal runs)
 ```
 
 ## What's Covered
@@ -140,8 +137,6 @@ test.use({ storageState: AUTH_FILE });
 **How the reports are used.** Both Allure single-file and Monocart are kept, deliberately, as the shareable reports (emailable, no server, not tied to a git host) — each has strengths the other doesn't (Allure: Behaviors tree, descriptions, bug links; Monocart: sortable/searchable columns, a single-file trend). Any change to what the reports show is made so it reaches both — see each report's own file for exactly how.
 
 **Where the information comes from.** Specs stay plain. `utils/allureTags.ts` (`tagAllure` per `describe` sets epic/feature/story/severity, and pushes the same values as Playwright annotations for Monocart) and `utils/step.ts` (the `@step` decorator on page-object methods turns each call into a named step, read by both reports) supply everything both reports show.
-
-**Intentional failures.** `@demo` tests fail on purpose, to show how failures look in each report. Excluded from normal runs; run with `npm run test:demo`.
 
 ## Troubleshooting
 

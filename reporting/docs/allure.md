@@ -57,16 +57,12 @@ folder-based Allure with trend graphs again.
   the two reports agree.
 - **Test description** — `describeTest('...')`, a one-line plain-English statement of what the test proves.
   Currently only on the `@smoke` tests.
-- **Bug links** — `linkIssue('DEMO-1')` calls `allure.issue()` under a placeholder tracker URL (`ISSUE_URL` in
-  `utils/allureTags.ts`). No real tracker exists yet for this project; swap `ISSUE_URL` when one does. Used on
-  the two `@demo` intentional-failure tests as a worked example.
+- **Bug links** — `linkIssue(id)` calls `allure.issue()` under a placeholder tracker URL (`ISSUE_URL` in
+  `utils/allureTags.ts`). No real tracker exists yet for this project; swap `ISSUE_URL` when one does.
 - **Steps** — the `@step` method decorator (`utils/step.ts`) on every page-object method, e.g.
   `CartPage.proceedToCheckout` → step "Cart: proceed to checkout". Specs stay plain; nothing is hand-wrapped in
   `test.step` any more (it was, in three specs, during the trial — removed once the decorator covered the same
   ground for every spec, not just those three, without repeating step names by hand).
-- **`@demo` tests are excluded** from normal runs (`grepInvert` in `playwright.config.ts`) so their deliberate
-  failures never appear in this report by default; run them via `npm run test:demo` (sets `RUN_DEMO=1`) to see
-  them, including their bug links.
 
 ## Where it's generated in CI
 

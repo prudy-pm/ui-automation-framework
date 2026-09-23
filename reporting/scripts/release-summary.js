@@ -8,7 +8,6 @@
  *  - critical path  = tests tagged @smoke
  *  - scenario       = one test as written; a browser run = that scenario in one browser
  *  - real failure   = a run that failed on every attempt; flaky = failed, then passed on retry
- *  - @demo tests are intentional failures and are excluded
  */
 const fs = require('fs');
 const path = require('path');
@@ -27,7 +26,6 @@ const runs = [];
   for (const row of rows) {
     const inProject = row.suiteType === 'project' ? row.title : project;
     if (row.type === 'case') {
-      if ((row.tags || []).includes('@demo')) continue;
       runs.push({
         browser: inProject,
         title: row.title,
@@ -160,7 +158,7 @@ ${comparable.length ? table(['Run', 'Passed', 'Failed', 'Flaky', 'Duration'], co
 
 <h2>What was tested</h2>
 ${table(['Item', 'Value'], meta.map(([k, v]) => [escapeHtml(k), escapeHtml(v)]))}
-<p class="small">The application under test is a third-party site with no version number to report. @demo tests (intentional failures) are excluded.</p>
+<p class="small">The application under test is a third-party site with no version number to report.</p>
 </main></body></html>
 `;
 
