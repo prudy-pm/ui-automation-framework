@@ -2,47 +2,6 @@
 
 End-to-end UI and API test automation for [AutomationExercise](https://automationexercise.com), built with Playwright and TypeScript using the Page Object Model. Designed as a reusable foundation, not a one-off demo — see [Future Considerations](#future-considerations) for what changes when this points at a live product.
 
-## Tech Stack
-
-- **Playwright Test** (`@playwright/test`) — test runner, browser automation, and API testing (`request` fixture)
-- **TypeScript** — type-safe tests, page objects, API clients, and fixtures
-- **@faker-js/faker** — generates test data at runtime instead of committing static/predictable values
-- **xlsx** (installed via SheetJS's official CDN, not the unmaintained npm registry copy) — reads Excel-based test data
-- **dotenv** — environment-based config for URLs and credentials
-- **Playwright HTML Reporter** + **Allure Report** + **Monocart** — reporting layers (see [Reporting](#reporting))
-- **@estruyf/github-actions-reporter** — writes a pass/fail summary directly to the GitHub Actions run page
-
-## Project Structure
-
-```
-ui-automation-framework/
-├── tests/
-│   ├── ui/
-│   │   ├── auth/                    # login, empty-field validation
-│   │   ├── products/                 # search (Excel-driven), add to cart
-│   │   ├── cart/                      # add/remove/price, quantity (JSON-driven)
-│   │   ├── checkout/                   # full flow, chromium-only, shared session
-│   │   └── newsletter/                  # home + cart pages (Faker-driven)
-│   └── api/                              # products, account CRUD lifecycle, layered validation
-├── pages/                                  # Page Object Model classes, all extending BasePage
-│   └── FooterComponent.ts                   # shared, cross-page component
-├── api/                                      # API client classes, all extending BaseApiClient
-├── fixtures/                                  # pageFixtures.ts, apiFixtures.ts
-├── data/                                       # JSON, one Excel example, TS types
-├── config/                                      # env.ts, authFile.ts, globalSetup.ts
-├── utils/                                        # faker wrappers, excelData, accountFactory,
-│                                                    allureTags.ts (report tagging), step.ts (@step decorator)
-├── reporting/                                      # everything specific to Allure/Monocart reporting
-│   ├── docs/                                         # allure.md, monocart.md -- config & rationale
-│   ├── scripts/                                       # release-summary.js, coverage-gaps.js, archive-reports.js
-│   └── data/featureInventory.json                      # hand-kept coverage list, vs the site's documented cases
-├── .env.example
-├── tsconfig.json                                        # @pages/@fixtures/@config/@data/@utils/@api aliases
-└── playwright.config.ts                                   # chromium/firefox/webkit; checkout is chromium-only
-```
-
-Tests are grouped by **feature**, not by type. Tests are tagged (`@smoke`, `@regression`) so subsets can be run independently.
-
 ## Getting Started
 
 **Prerequisite:** Node.js LTS.
@@ -89,6 +48,59 @@ npm run report:summary       # one-page release-readiness summary of the last ru
 npm run report:gaps          # what is / is not automated, vs the site's documented cases
 npm run report:archive       # copy the current reports to reports-archive/<date>/
 ```
+
+## Troubleshooting
+
+- **Every test fails immediately, at setup.** Almost always a missing/wrong test account — see [Getting Started](#getting-started). `globalSetup.ts` aborts the whole run if it can't log in.
+- **`report:allure:single` fails locally.** Needs a local JDK (Java 8+) — `java -version` to confirm. CI is unaffected.
+- **Tests time out or fail intermittently, but pass on retry.** automationexercise.com is a free public demo site with no SLA — a plain `curl -sS -o /dev/null -w "ttfb: %{time_starttransfer}s\n" https://automationexercise.com/products` regularly shows 10+ second time-to-first-byte. This repo already accounts for that: longer test/expect timeouts, `domcontentloaded` instead of `load` for navigation, and `retries: process.env.CI ? 2 : 1`. A genuine connection reset (`ERR_CONNECTION_RESET`, not a timeout) is only fixed by the retry, not a longer timeout. If pointing this framework at a different, better-provisioned target, re-check these rather than carrying them over — they exist because of this specific site, not as general-purpose padding.
+- **Run a subset instead of the full suite:**
+  ```bash
+  npx playwright test tests/ui/auth/login.spec.ts   # one file
+  npx playwright test --project=chromium              # one browser
+  npx playwright test --grep "@smoke"                   # one tag (or combine with the above)
+  ```
+
+## Tech Stack
+
+- **Playwright Test** (`@playwright/test`) — test runner, browser automation, and API testing (`request` fixture)
+- **TypeScript** — type-safe tests, page objects, API clients, and fixtures
+- **@faker-js/faker** — generates test data at runtime instead of committing static/predictable values
+- **xlsx** (installed via SheetJS's official CDN, not the unmaintained npm registry copy) — reads Excel-based test data
+- **dotenv** — environment-based config for URLs and credentials
+- **Playwright HTML Reporter** + **Allure Report** + **Monocart** — reporting layers (see [Reporting](#reporting))
+- **@estruyf/github-actions-reporter** — writes a pass/fail summary directly to the GitHub Actions run page
+
+## Project Structure
+
+```
+ui-automation-framework/
+├── tests/
+│   ├── ui/
+│   │   ├── auth/                    # login, empty-field validation
+│   │   ├── products/                 # search (Excel-driven), add to cart
+│   │   ├── cart/                      # add/remove/price, quantity (JSON-driven)
+│   │   ├── checkout/                   # full flow, chromium-only, shared session
+│   │   └── newsletter/                  # home + cart pages (Faker-driven)
+│   └── api/                              # products, account CRUD lifecycle, layered validation
+├── pages/                                  # Page Object Model classes, all extending BasePage
+│   └── FooterComponent.ts                   # shared, cross-page component
+├── api/                                      # API client classes, all extending BaseApiClient
+├── fixtures/                                  # pageFixtures.ts, apiFixtures.ts
+├── data/                                       # JSON, one Excel example, TS types
+├── config/                                      # env.ts, authFile.ts, globalSetup.ts
+├── utils/                                        # faker wrappers, excelData, accountFactory,
+│                                                    allureTags.ts (report tagging), step.ts (@step decorator)
+├── reporting/                                      # everything specific to Allure/Monocart reporting
+│   ├── docs/                                         # allure.md, monocart.md -- config & rationale
+│   ├── scripts/                                       # release-summary.js, coverage-gaps.js, archive-reports.js
+│   └── data/featureInventory.json                      # hand-kept coverage list, vs the site's documented cases
+├── .env.example
+├── tsconfig.json                                        # @pages/@fixtures/@config/@data/@utils/@api aliases
+└── playwright.config.ts                                   # chromium/firefox/webkit; checkout is chromium-only
+```
+
+Tests are grouped by **feature**, not by type. Tests are tagged (`@smoke`, `@regression`) so subsets can be run independently.
 
 ## What's Covered
 
@@ -138,18 +150,6 @@ test.use({ storageState: AUTH_FILE });
 **How the reports are used.** Both Allure single-file and Monocart are kept, deliberately, as the shareable reports (emailable, no server, not tied to a git host) — each has strengths the other doesn't (Allure: Behaviors tree, descriptions, bug links; Monocart: sortable/searchable columns, a single-file trend). Any change to what the reports show is made so it reaches both — see each report's own file for exactly how.
 
 **Where the information comes from.** Specs stay plain. `utils/allureTags.ts` (`tagAllure` per `describe` sets epic/feature/story/severity, layer derived automatically from the spec's path, and pushes the same values as Playwright annotations for Monocart) and `utils/step.ts` (the `@step` decorator on page-object methods turns each call into a named step, read by both reports) supply everything both reports show.
-
-## Troubleshooting
-
-- **Every test fails immediately, at setup.** Almost always a missing/wrong test account — see [Getting Started](#getting-started). `globalSetup.ts` aborts the whole run if it can't log in.
-- **`report:allure:single` fails locally.** Needs a local JDK (Java 8+) — `java -version` to confirm. CI is unaffected.
-- **Tests time out or fail intermittently, but pass on retry.** automationexercise.com is a free public demo site with no SLA — a plain `curl -sS -o /dev/null -w "ttfb: %{time_starttransfer}s\n" https://automationexercise.com/products` regularly shows 10+ second time-to-first-byte. This repo already accounts for that: longer test/expect timeouts, `domcontentloaded` instead of `load` for navigation, and `retries: process.env.CI ? 2 : 1`. A genuine connection reset (`ERR_CONNECTION_RESET`, not a timeout) is only fixed by the retry, not a longer timeout. If pointing this framework at a different, better-provisioned target, re-check these rather than carrying them over — they exist because of this specific site, not as general-purpose padding.
-- **Run a subset instead of the full suite:**
-  ```bash
-  npx playwright test tests/ui/auth/login.spec.ts   # one file
-  npx playwright test --project=chromium              # one browser
-  npx playwright test --grep "@smoke"                   # one tag (or combine with the above)
-  ```
 
 ## Future Considerations
 
