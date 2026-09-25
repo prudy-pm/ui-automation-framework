@@ -81,7 +81,7 @@ export default defineConfig({
       outputFile: 'monocart-report/index.html',
       zip: true,
       trend: './monocart-report/index.json',
-      /* Copies the epic/feature/story/severity annotations set by
+      /* Copies the layer/epic/feature/story/severity annotations set by
        * utils/allureTags.ts onto each test row, shown as columns below.
        * Monocart has no epic()/feature()/story() API of its own like
        * Allure -- this is how the two reports end up agreeing. Also drops
@@ -94,7 +94,7 @@ export default defineConfig({
        * derives from it, since that's more likely to stay stable.
        *
        * That filter only clears the case-level Attachments *column* --
-       * every Allure API call (epic/feature/story/severity, all called
+       * every Allure API call (layer/epic/feature/story/severity, all called
        * inside tagAllure()'s beforeEach) also shows up as its own *step*
        * ("Attach \"Allure Metadata (metadata)\"", stepType: 'test.attach'),
        * nested under Before Hooks -> beforeEach hook, confirmed by
@@ -106,7 +106,7 @@ export default defineConfig({
        * here cleans every level on the way up to Before/After Hooks. */
       visitor: (data, metadata) => {
         for (const item of metadata.annotations ?? []) {
-          if (['epic', 'feature', 'story', 'severity'].includes(item.type) && item.description) {
+          if (['epic', 'feature', 'story', 'severity', 'layer'].includes(item.type) && item.description) {
             data[item.type] = item.description;
           }
         }
@@ -123,8 +123,8 @@ export default defineConfig({
          * status duplicates outcome on every passing row and adds little
          * on a failing one; outcome (expected/unexpected/flaky/skipped) is
          * kept as the searchable/sortable text version of the caseType
-         * icon. annotations is now redundant with the epic/feature/story/
-         * severity columns added below.
+         * icon. annotations is now redundant with the layer/epic/feature/
+         * story/severity columns added below.
          * Must mutate defaultColumns in place -- confirmed via source
          * (lib/visitor.js) that this handler's return value is discarded. */
         const drop = new Set(['expectedStatus', 'status', 'annotations']);
@@ -134,6 +134,7 @@ export default defineConfig({
 
         const at = defaultColumns.findIndex((column) => column.id === 'duration');
         defaultColumns.splice(at, 0,
+          { id: 'layer', name: 'Layer', width: 70, searchable: true, sortable: true },
           { id: 'epic', name: 'Epic', width: 100, searchable: true, sortable: true },
           { id: 'feature', name: 'Feature', width: 110, searchable: true, sortable: true },
           { id: 'story', name: 'Story', width: 150, searchable: true, sortable: true },

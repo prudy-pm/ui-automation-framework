@@ -1,7 +1,14 @@
 import { test } from '@playwright/test';
-import { description, epic, feature, story, severity, issue } from 'allure-js-commons';
+import { description, epic, feature, story, severity, layer, issue } from 'allure-js-commons';
 
 type AllureTags = { epic: string; feature: string; story: string };
+
+// Derived from the spec's own path, not passed per describe -- tests/api vs
+// tests/ui is already the authoritative split, so this can't drift out of
+// sync with a spec's actual location the way a hand-typed tag could.
+function deriveLayer(specFile: string): 'API' | 'UI' {
+  return /[\\/]tests[\\/]api[\\/]/.test(specFile) ? 'API' : 'UI';
+}
 
 // Call once inside a test.describe: every test in it gets these Allure labels
 // (they drive the report's Behaviors tab). Severity comes from the title tag --
@@ -14,6 +21,8 @@ export function tagAllure(tags: AllureTags): void {
     await story(tags.story);
     const level = test.info().title.includes('@smoke') ? 'critical' : 'normal';
     await severity(level);
+    const layerValue = deriveLayer(test.info().file);
+    await layer(layerValue);
 
     // Same values as Playwright annotations: Monocart (visitor + columns in
     // playwright.config.ts) and the Playwright HTML report read these.
@@ -22,6 +31,7 @@ export function tagAllure(tags: AllureTags): void {
       { type: 'feature', description: tags.feature },
       { type: 'story', description: tags.story },
       { type: 'severity', description: level },
+      { type: 'layer', description: layerValue },
     );
   });
 }
