@@ -42,6 +42,8 @@ Tests are grouped by **feature**, not by type. Tests are tagged (`@smoke`, `@reg
 
 ## Getting Started
 
+**Prerequisite:** Node.js LTS.
+
 ```bash
 npm install
 npx playwright install
@@ -65,7 +67,7 @@ No test ever deletes or mutates this account (confirmed: the one spec that reuse
 
 `config/globalSetup.ts` logs in with this account once before the suite runs and **aborts the whole run if that login fails** — so a wrong/missing password fails every test, not just the login ones. If you see every test failing at setup, check `.env` first.
 
-**Allure reports require a local JDK (Java 8+)** — run `java -version` to confirm. This only affects local report generation; CI is unaffected.
+**Allure reports require a local JDK (Java 8+).** Run `java -version` to confirm. If missing, install one (e.g. [Eclipse Temurin](https://adoptium.net)) — this only affects local report generation; CI is unaffected.
 
 ## Running Tests
 
