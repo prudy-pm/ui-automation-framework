@@ -8,6 +8,8 @@ jobs:
   test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       BASE_URL: ${{ secrets.BASE_URL }}
       API_BASE_URL: ${{ secrets.API_BASE_URL }}
