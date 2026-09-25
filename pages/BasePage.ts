@@ -1,4 +1,5 @@
 import { Page, Locator, expect } from '@playwright/test';
+import { step } from '@utils/step';
 
 /**
  * BasePage holds actions and behaviour shared by every page object.
@@ -23,6 +24,7 @@ export class BasePage {
         this.page = page;
     }
 
+    @step
     async goto(path: string = this.defaultPath): Promise<void> {
         // 'domcontentloaded' instead of Playwright's default 'load':
         // confirmed via a direct curl that this site's TTFB alone runs
@@ -34,38 +36,46 @@ export class BasePage {
         await this.page.goto(path, { waitUntil: 'domcontentloaded' });
     }
 
+    @step
     async click(locator: Locator): Promise<void> {
         await locator.waitFor({ state: 'visible' });
         await locator.click();
     }
 
+    @step
     async fill(locator: Locator, value: string): Promise<void> {
         await locator.waitFor({ state: 'visible' });
         await locator.fill(value);
     }
 
+    @step
     async getText(locator: Locator): Promise<string> {
         await locator.waitFor({ state: 'visible' });
         return (await locator.textContent())?.trim() ?? '';
     }
 
+    @step
     async isVisible(locator: Locator): Promise<boolean> {
         return locator.isVisible();
     }
 
+    @step
     async expectVisible(locator: Locator): Promise<void> {
         await expect(locator).toBeVisible();
     }
 
+    @step
     async expectText(locator: Locator, expected: string): Promise<void> {
         await expect(locator).toHaveText(expected);
     }
 
+    @step
     async expectFieldInvalid(locator: Locator): Promise<void> {
         const isValid = await locator.evaluate((el: HTMLInputElement) => el.checkValidity());
         expect(isValid).toBe(false);
     }
 
+    @step
     async expectHidden(locator: Locator): Promise<void> {
         await expect(locator).toHaveCount(0);
     }
