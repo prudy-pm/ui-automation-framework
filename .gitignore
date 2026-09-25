@@ -1,4 +1,7 @@
 
+# Claude Code (local worktrees/session state, not part of the codebase)
+.claude/
+
 # Playwright
 node_modules/
 /test-results/
