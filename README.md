@@ -81,28 +81,21 @@ npm run report:archive       # copy the current reports to reports-archive/<date
 ```
 ui-automation-framework/
 ├── tests/
-│   ├── ui/
-│   │   ├── auth/                  # login, empty-field validation
-│   │   ├── products/              # search (Excel-driven), add to cart
-│   │   ├── cart/                  # add/remove/price, quantity (JSON-driven)
-│   │   ├── checkout/              # full flow, chromium-only, shared session
-│   │   └── newsletter/            # home + cart pages (Faker-driven)
-│   └── api/                       # products, account CRUD lifecycle, layered validation
-├── pages/                         # Page Object Model classes, all extending BasePage
-│   └── FooterComponent.ts         # shared, cross-page component
-├── api/                           # API client classes, all extending BaseApiClient
-├── fixtures/                      # pageFixtures.ts, apiFixtures.ts
-├── data/                          # JSON, one Excel example, TS types
-├── config/                        # env.ts, authFile.ts, globalSetup.ts
-├── utils/                         # faker wrappers, excelData, accountFactory,
-│                                    allureTags.ts (report tagging), step.ts (@step decorator)
-├── reporting/                     # everything specific to Allure/Monocart reporting
-│   ├── docs/                      # allure.md, monocart.md, architecture.md
-│   ├── scripts/                   # release-summary.js, coverage-gaps.js, archive-reports.js
-│   └── data/featureInventory.json # hand-kept coverage list, vs the site's documented cases
-├── .env.example
-├── tsconfig.json                  # @pages/@fixtures/@config/@data/@utils/@api aliases
-└── playwright.config.ts           # chromium/firefox/webkit; checkout is chromium-only
+│   ├── ui/              # auth, products, cart, checkout, newsletter -- feature-organized specs
+│   └── api/             # products, account CRUD lifecycle, layered validation
+├── pages/               # Page Object Model classes extending BasePage, plus FooterComponent (shared)
+├── api/                 # API client classes, all extending BaseApiClient
+├── fixtures/            # pageFixtures.ts, apiFixtures.ts
+├── data/                # JSON, one Excel example, TS types
+├── config/              # env.ts, authFile.ts, globalSetup.ts
+├── utils/               # faker wrappers, excelData, accountFactory, allureTags.ts, step.ts
+├── reporting/           # everything specific to Allure/Monocart reporting
+│   ├── docs/            # allure.md, monocart.md, architecture.md
+│   ├── scripts/         # release-summary.js, coverage-gaps.js, archive-reports.js
+│   └── data/            # featureInventory.json -- hand-kept coverage list
+├── .env.example         # template for your local .env (see Getting Started)
+├── tsconfig.json        # @pages/@fixtures/@config/@data/@utils/@api aliases
+└── playwright.config.ts # chromium/firefox/webkit; checkout is chromium-only
 ```
 
 Tests are grouped by **feature**, not by type. Tests are tagged (`@smoke`, `@regression`) so subsets can be run independently. For how the codebase is organized and the reasoning behind it, see [`reporting/docs/architecture.md`](reporting/docs/architecture.md).
