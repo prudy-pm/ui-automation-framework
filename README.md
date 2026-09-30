@@ -56,7 +56,9 @@ API_BASE_URL=https://automationexercise.com/api/
 TEST_USER_EMAIL=
 TEST_USER_PASSWORD=
 ```
-`.env` is gitignored. Note the trailing slash on `API_BASE_URL` — required for correct URL resolution against the API clients' relative paths.
+`.env` is gitignored.
+
+Note the trailing slash on `API_BASE_URL` — required for correct URL resolution against the API clients' relative paths.
 
 **Getting a `TEST_USER_EMAIL` / `TEST_USER_PASSWORD`.** `env.testUser` must be a real, already-registered account on automationexercise.com — the suite only logs in with it (UI login, API `verifyLogin`), it never signs one up automatically. To get one:
 1. Go to automationexercise.com and use **Signup / Login** to register a new account. This is a public practice site with no real payment or personal data involved, so a dedicated test-only account is expected and normal — don't reuse a real personal password here. This is a one-time setup step: the same account is reused indefinitely (see below), including for the checkout flow's shared session (see [Authenticated Tests](#authenticated-tests)).
