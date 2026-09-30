@@ -14,18 +14,13 @@
     "report:monocart": "npx monocart show-report monocart-report/index.html",
     "report:gaps": "node reporting/scripts/coverage-gaps.js",
     "report:summary": "node reporting/scripts/release-summary.js",
-    "report:archive": "node reporting/scripts/archive-reports.js",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "report:archive": "node reporting/scripts/archive-reports.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
     "@estruyf/github-actions-reporter": "^1.12.0",
     "@faker-js/faker": "^10.6.0",
     "@playwright/test": "^1.62.1",
@@ -33,13 +28,7 @@
     "allure-commandline": "^2.43.0",
     "allure-playwright": "^3.12.1",
     "dotenv": "^17.4.2",
-    "eslint": "^10.11.0",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-playwright": "^2.12.0",
-    "globals": "^17.12.0",
     "monocart-reporter": "^2.13.1",
-    "prettier": "^3.9.9",
-    "typescript-eslint": "^8.71.0",
     "xlsx": "https://cdn.sheetjs.com/xlsx-latest/xlsx-latest.tgz"
   }
 }
