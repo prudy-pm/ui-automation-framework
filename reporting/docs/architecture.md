@@ -69,3 +69,20 @@ curl -sS -o /dev/null -w "ttfb: %{time_starttransfer}s\n" https://automationexer
 them over** — they exist because of this specific site. None of this fixes a genuine connection reset
 (`ERR_CONNECTION_RESET`, distinct from a timeout) — only a retry does, which is why
 `retries: process.env.CI ? 2 : 1` exists independently of the values above.
+
+## Running this in a pipeline
+
+`.github/workflows/playwright.yml` is a real, verified-working reference (see the comment at the top of that
+file) for wiring this suite into CI. Whichever pipeline platform is actually used, these are the values it
+needs — the names below are what the reference file expects; a different platform will have its own place to
+register them (e.g. GitHub's own Settings → Secrets and variables → Actions).
+
+**Required** — the suite won't run without these:
+- `BASE_URL` — the site under test (`https://automationexercise.com`)
+- `API_BASE_URL` — the API base, trailing slash included (`https://automationexercise.com/api/`)
+- `TEST_USER_EMAIL` / `TEST_USER_PASSWORD` — the shared test account (see the README's Getting Started for how
+  to obtain one)
+
+**Optional:**
+- `TEAMS_WEBHOOK_URL` — only needed for the failure-alert step to succeed; the tests themselves run fine
+  without it.

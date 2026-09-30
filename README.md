@@ -31,16 +31,17 @@ Note the trailing slash on `API_BASE_URL` — required for correct URL resolutio
 **Getting a `TEST_USER_EMAIL` / `TEST_USER_PASSWORD`.** `env.testUser` must be a real, already-registered account on automationexercise.com — the suite only logs in with it (UI login, API `verifyLogin`), it never signs one up automatically. To get one:
 1. Go to automationexercise.com and use **Signup / Login** to register a new account. This is a public practice site with no real payment or personal data involved, so a dedicated test-only account is expected and normal — don't reuse a real personal password here. This is a one-time setup step: the same account is reused indefinitely, including for the checkout flow's shared session (see [`reporting/docs/architecture.md`](reporting/docs/architecture.md) for why that's safe).
 2. Put that account's email/password into your local `.env` only. `.env` is gitignored — it never gets committed, and the values never belong in code, docs, commit messages, or chat.
-3. For CI, the same two values are configured as repository secrets (`TEST_USER_EMAIL`, `TEST_USER_PASSWORD` — see `.github/workflows/playwright.yml`), not read from any file in the repo. If you're standing up CI on a fork or new remote, set those (plus `BASE_URL`, `API_BASE_URL`, `TEAMS_WEBHOOK_URL`) under your CI provider's secrets/variables settings.
 
 `config/globalSetup.ts` logs in with this account once before the suite runs and **aborts the whole run if that login fails** — so a wrong/missing password fails every test, not just the login ones. See [Troubleshooting](#troubleshooting) if that happens.
+
+Want to run this in a pipeline? See [`reporting/docs/architecture.md`](reporting/docs/architecture.md) for the required secrets.
 
 **Allure reports require a local JDK (Java 8+).** Run `java -version` to confirm. If missing, install one (e.g. [Eclipse Temurin](https://adoptium.net)) — this only affects local report generation; CI is unaffected.
 
 ## Running Tests
 
 ```bash
-npm test                    # everything
+npm test                     # everything
 npm run test:ui              # UI suite only
 npm run test:api             # API suite only
 npm run test:smoke           # @smoke-tagged tests only
@@ -60,8 +61,8 @@ npm run report:archive       # copy the current reports to reports-archive/<date
 - **Tests time out or fail intermittently, but pass on retry.** Expected — automationexercise.com is a free public demo site with no SLA, and this repo already accounts for it (longer timeouts, retries). Full reasoning and evidence: [`reporting/docs/architecture.md`](reporting/docs/architecture.md).
 - **Run a subset instead of the full suite:**
   ```bash
-  npx playwright test tests/ui/auth/login.spec.ts   # one file
-  npx playwright test --project=chromium              # one browser
+  npx playwright test tests/ui/auth/login.spec.ts       # one file
+  npx playwright test --project=chromium                # one browser
   npx playwright test --grep "@smoke"                   # one tag (or combine with the above)
   ```
 
@@ -81,27 +82,27 @@ npm run report:archive       # copy the current reports to reports-archive/<date
 ui-automation-framework/
 ├── tests/
 │   ├── ui/
-│   │   ├── auth/                    # login, empty-field validation
-│   │   ├── products/                 # search (Excel-driven), add to cart
-│   │   ├── cart/                      # add/remove/price, quantity (JSON-driven)
-│   │   ├── checkout/                   # full flow, chromium-only, shared session
-│   │   └── newsletter/                  # home + cart pages (Faker-driven)
-│   └── api/                              # products, account CRUD lifecycle, layered validation
-├── pages/                                  # Page Object Model classes, all extending BasePage
-│   └── FooterComponent.ts                   # shared, cross-page component
-├── api/                                      # API client classes, all extending BaseApiClient
-├── fixtures/                                  # pageFixtures.ts, apiFixtures.ts
-├── data/                                       # JSON, one Excel example, TS types
-├── config/                                      # env.ts, authFile.ts, globalSetup.ts
-├── utils/                                        # faker wrappers, excelData, accountFactory,
-│                                                    allureTags.ts (report tagging), step.ts (@step decorator)
-├── reporting/                                      # everything specific to Allure/Monocart reporting
-│   ├── docs/                                         # allure.md, monocart.md, architecture.md
-│   ├── scripts/                                       # release-summary.js, coverage-gaps.js, archive-reports.js
-│   └── data/featureInventory.json                      # hand-kept coverage list, vs the site's documented cases
+│   │   ├── auth/                  # login, empty-field validation
+│   │   ├── products/              # search (Excel-driven), add to cart
+│   │   ├── cart/                  # add/remove/price, quantity (JSON-driven)
+│   │   ├── checkout/              # full flow, chromium-only, shared session
+│   │   └── newsletter/            # home + cart pages (Faker-driven)
+│   └── api/                       # products, account CRUD lifecycle, layered validation
+├── pages/                         # Page Object Model classes, all extending BasePage
+│   └── FooterComponent.ts         # shared, cross-page component
+├── api/                           # API client classes, all extending BaseApiClient
+├── fixtures/                      # pageFixtures.ts, apiFixtures.ts
+├── data/                          # JSON, one Excel example, TS types
+├── config/                        # env.ts, authFile.ts, globalSetup.ts
+├── utils/                         # faker wrappers, excelData, accountFactory,
+│                                    allureTags.ts (report tagging), step.ts (@step decorator)
+├── reporting/                     # everything specific to Allure/Monocart reporting
+│   ├── docs/                      # allure.md, monocart.md, architecture.md
+│   ├── scripts/                   # release-summary.js, coverage-gaps.js, archive-reports.js
+│   └── data/featureInventory.json # hand-kept coverage list, vs the site's documented cases
 ├── .env.example
-├── tsconfig.json                                        # @pages/@fixtures/@config/@data/@utils/@api aliases
-└── playwright.config.ts                                   # chromium/firefox/webkit; checkout is chromium-only
+├── tsconfig.json                  # @pages/@fixtures/@config/@data/@utils/@api aliases
+└── playwright.config.ts           # chromium/firefox/webkit; checkout is chromium-only
 ```
 
 Tests are grouped by **feature**, not by type. Tests are tagged (`@smoke`, `@regression`) so subsets can be run independently. For how the codebase is organized and the reasoning behind it, see [`reporting/docs/architecture.md`](reporting/docs/architecture.md).
