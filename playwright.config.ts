@@ -10,14 +10,17 @@ if (process.env.TEST_WORKER_INDEX === undefined) {
 
 const git = (args: string): string => {
   try {
-    return execSync(`git ${args}`, { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+    return execSync(`git ${args}`, { stdio: ['ignore', 'pipe', 'ignore'] })
+      .toString()
+      .trim();
   } catch {
     return '';
   }
 };
 const buildInfo = {
   'Base URL': env.baseUrl,
-  'Framework commit': (git('rev-parse --short HEAD') || 'unknown') + (git('status --porcelain') ? ' (uncommitted changes)' : ''),
+  'Framework commit':
+    (git('rev-parse --short HEAD') || 'unknown') + (git('status --porcelain') ? ' (uncommitted changes)' : ''),
   'Configured browsers': 'chromium, firefox, webkit',
   'Run type': process.env.CI ? 'CI' : 'local',
 };
@@ -40,47 +43,54 @@ export default defineConfig({
     ['html'],
     ['@estruyf/github-actions-reporter'],
     ['allure-playwright', { resultsDir: 'allure-results', environmentInfo: buildInfo, detail: false }],
-    ['monocart-reporter', {
-      name: 'UI Automation Framework Report',
-      outputFile: 'monocart-report/index.html',
-      zip: true,
-      trend: './monocart-report/index.json',
-      visitor: (data, metadata) => {
-        // Mirrors the layer/epic/feature/story/severity annotations utils/allureTags.ts sets, so both reports agree.
-        for (const item of metadata.annotations ?? []) {
-          if (['epic', 'feature', 'story', 'severity', 'layer'].includes(item.type) && item.description) {
-            data[item.type] = item.description;
+    [
+      'monocart-reporter',
+      {
+        name: 'UI Automation Framework Report',
+        outputFile: 'monocart-report/index.html',
+        zip: true,
+        trend: './monocart-report/index.json',
+        visitor: (data, metadata) => {
+          // Mirrors the layer/epic/feature/story/severity annotations utils/allureTags.ts sets, so both reports agree.
+          for (const item of metadata.annotations ?? []) {
+            if (['epic', 'feature', 'story', 'severity', 'layer'].includes(item.type) && item.description) {
+              data[item.type] = item.description;
+            }
           }
-        }
-        // Drops Allure's internal "Attach Allure Metadata" noise -- not a real attachment a reader would want.
-        if (data.attachments) {
-          data.attachments = data.attachments.filter((a) => a.contentType !== 'application/vnd.allure.message+json');
-        }
-        if (data.subs) {
-          data.subs = data.subs.filter((s) => !(s.stepType === 'test.attach' && s.title?.includes('Allure Metadata')));
-        }
-      },
-      columns: (defaultColumns) => {
-        // Must mutate in place -- Monocart discards this callback's return value.
-        const drop = new Set(['expectedStatus', 'status', 'annotations']);
-        const kept = defaultColumns.filter((column) => !drop.has(column.id));
-        defaultColumns.length = 0;
-        defaultColumns.push(...kept);
+          // Drops Allure's internal "Attach Allure Metadata" noise -- not a real attachment a reader would want.
+          if (data.attachments) {
+            data.attachments = data.attachments.filter((a) => a.contentType !== 'application/vnd.allure.message+json');
+          }
+          if (data.subs) {
+            data.subs = data.subs.filter(
+              (s) => !(s.stepType === 'test.attach' && s.title?.includes('Allure Metadata')),
+            );
+          }
+        },
+        columns: (defaultColumns) => {
+          // Must mutate in place -- Monocart discards this callback's return value.
+          const drop = new Set(['expectedStatus', 'status', 'annotations']);
+          const kept = defaultColumns.filter((column) => !drop.has(column.id));
+          defaultColumns.length = 0;
+          defaultColumns.push(...kept);
 
-        const at = defaultColumns.findIndex((column) => column.id === 'duration');
-        defaultColumns.splice(at, 0,
-          { id: 'layer', name: 'Layer', width: 70, searchable: true, sortable: true },
-          { id: 'epic', name: 'Epic', width: 100, searchable: true, sortable: true },
-          { id: 'feature', name: 'Feature', width: 110, searchable: true, sortable: true },
-          { id: 'story', name: 'Story', width: 150, searchable: true, sortable: true },
-          { id: 'severity', name: 'Severity', width: 80, searchable: true, sortable: true },
-        );
+          const at = defaultColumns.findIndex((column) => column.id === 'duration');
+          defaultColumns.splice(
+            at,
+            0,
+            { id: 'layer', name: 'Layer', width: 70, searchable: true, sortable: true },
+            { id: 'epic', name: 'Epic', width: 100, searchable: true, sortable: true },
+            { id: 'feature', name: 'Feature', width: 110, searchable: true, sortable: true },
+            { id: 'story', name: 'Story', width: 150, searchable: true, sortable: true },
+            { id: 'severity', name: 'Severity', width: 80, searchable: true, sortable: true },
+          );
+        },
+        tags: {
+          smoke: { background: '#0B7A3D' },
+          regression: { background: '#0B5FA3' },
+        },
       },
-      tags: {
-        smoke: { background: '#0B7A3D' },
-        regression: { background: '#0B5FA3' },
-      },
-    }],
+    ],
   ],
   use: {
     baseURL: env.baseUrl,

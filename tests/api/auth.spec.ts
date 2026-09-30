@@ -8,6 +8,7 @@ import { AccountProfile } from '@data/types';
 
 test.describe('Account API', () => {
   tagAllure({ epic: 'Account', feature: 'Account API', story: 'Account management' });
+
   test('verifyLogin succeeds for the existing test account @smoke', async ({ accountApi }) => {
     await describeTest('The API confirms the shared test account can log in with its real credentials.');
     const response = await accountApi.verifyLogin(env.testUser.email, env.testUser.password);
@@ -24,7 +25,7 @@ test.describe('Account API', () => {
   test('createAccount rejects an email that already exists @regression', async ({ accountApi }) => {
     const [profile] = accountProfiles as AccountProfile[];
     const response = await accountApi.createAccount(
-      toApiPayload(profile, env.testUser.email, generateRandomPassword())
+      toApiPayload(profile, env.testUser.email, generateRandomPassword()),
     );
     const body = await response.json();
     expect(body.responseCode).toBe(400);

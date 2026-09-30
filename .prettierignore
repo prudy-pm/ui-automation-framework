@@ -1,0 +1,16 @@
+node_modules/
+test-results/
+playwright-report/
+blob-report/
+playwright/
+allure-results/
+allure-report-single/
+monocart-report/
+reports-archive/
+release-summary/
+dist/
+package-lock.json
+data/productSearchTerms.xlsx
+
+# Hand-crafted prose (README, reporting/docs/) -- not code, don't want automated reformatting of wording/structure.
+*.md

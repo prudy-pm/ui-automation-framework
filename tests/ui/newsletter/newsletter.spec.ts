@@ -4,6 +4,7 @@ import { generateRandomEmail } from '@utils/helpers';
 
 test.describe('Newsletter Subscription', () => {
   tagAllure({ epic: 'Marketing', feature: 'Newsletter', story: 'Subscribe' });
+
   test('user can subscribe from the home page @regression', async ({ page, footer }) => {
     await page.goto('/');
     await footer.expectSectionVisible();

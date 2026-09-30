@@ -11,16 +11,17 @@ function deriveLayer(specFile: string): 'API' | 'UI' {
 // Call once inside a test.describe: every test in it gets these labels. Severity follows the @smoke title tag.
 export function tagAllure(tags: AllureTags): void {
   test.beforeEach(async () => {
+    const info = test.info();
     await epic(tags.epic);
     await feature(tags.feature);
     await story(tags.story);
-    const level = test.info().title.includes('@smoke') ? 'critical' : 'normal';
+    const level = info.title.includes('@smoke') ? 'critical' : 'normal';
     await severity(level);
-    const layerValue = deriveLayer(test.info().file);
+    const layerValue = deriveLayer(info.file);
     await layer(layerValue);
 
     // Same values pushed as Playwright annotations, which Monocart (playwright.config.ts) reads.
-    test.info().annotations.push(
+    info.annotations.push(
       { type: 'epic', description: tags.epic },
       { type: 'feature', description: tags.feature },
       { type: 'story', description: tags.story },

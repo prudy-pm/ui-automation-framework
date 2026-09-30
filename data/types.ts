@@ -6,7 +6,7 @@ export interface InvalidLoginCase {
 }
 export type ProductSearchCase = {
   searchTerm: string;
-}
+};
 
 export interface BirthDate {
   day: string;

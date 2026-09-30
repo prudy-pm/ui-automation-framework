@@ -10,8 +10,11 @@ const path = require('path');
 const rootDir = path.resolve(__dirname, '..', '..');
 const inventory = JSON.parse(fs.readFileSync(path.join(rootDir, 'reporting', 'data', 'featureInventory.json'), 'utf8'));
 
-const missing = inventory.flatMap((item) => item.specs.filter((spec) => !fs.existsSync(path.join(rootDir, spec)))
-  .map((spec) => `${item.id} cites ${spec}, which does not exist`));
+const missing = inventory.flatMap((item) =>
+  item.specs
+    .filter((spec) => !fs.existsSync(path.join(rootDir, spec)))
+    .map((spec) => `${item.id} cites ${spec}, which does not exist`),
+);
 
 const rank = { high: 0, medium: 1, low: 2 };
 const pct = (n, total) => `${Math.round((n / total) * 100)}%`;

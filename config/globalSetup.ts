@@ -39,7 +39,7 @@ async function saveTestUserSession(): Promise<void> {
         await context.storageState({ path: AUTH_FILE });
         return;
       } catch (error) {
-        if (attempt >= 2) throw new Error(`Test-user login (global setup) failed: ${error}`);
+        if (attempt >= 2) throw new Error('Test-user login (global setup) failed', { cause: error });
       } finally {
         await context.close();
       }
@@ -56,7 +56,7 @@ function assertFirstProductMatches(products: CatalogProduct[] | undefined, sourc
       `Pre-flight catalog check failed: ${source} now returns "${first?.name}" at "${first?.price}" first, ` +
         `but data/scenarios.ts assumes "${CATALOG_PRODUCT.name}" at "${CATALOG_PRODUCT.price}". ` +
         `automationexercise.com's live catalog has changed -- update data/scenarios.ts (and any page-order ` +
-        `assumptions in ProductsPage.viewProductAt/searchAndAddFirstToCart) before re-running the suite.`
+        `assumptions in ProductsPage.viewProductAt/searchAndAddFirstToCart) before re-running the suite.`,
     );
   }
 }

@@ -21,6 +21,9 @@ release-summary/
 # TypeScript
 dist/
 
+# Lint/format
+.eslintcache
+
 # Editors -- .vscode/ is not ignored: settings.json and extensions.json are committed deliberately
 .idea/
 

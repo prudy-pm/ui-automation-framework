@@ -2,7 +2,7 @@ import { APIRequestContext, APIResponse } from '@playwright/test';
 
 type FormFields = Record<string, string | number | boolean>;
 export class BaseApiClient {
-  constructor(protected readonly api: APIRequestContext) { }
+  constructor(protected readonly api: APIRequestContext) {}
 
   async get(path: string): Promise<APIResponse> {
     return this.api.get(path);
