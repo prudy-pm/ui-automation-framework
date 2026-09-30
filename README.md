@@ -17,25 +17,28 @@ npm install
 npx playwright install
 ```
 
-Copy `.env.example` to `.env`:
+**`.env.example` is a ready-to-use template, checked into this repo** — copy it to `.env`, then replace the two `{{...}}` placeholders with your own values (everything else can stay as-is):
 ```bash
 cp .env.example .env
 ```
-Then fill it in:
 ```
 BASE_URL=https://automationexercise.com
 API_BASE_URL=https://automationexercise.com/api/
-TEST_USER_EMAIL=
-TEST_USER_PASSWORD=
+TEST_USER_EMAIL={{TestUsername}}                    # <- replace with your test account's email
+TEST_USER_PASSWORD={{ReplaceThisWithRealPassword}}  # <- replace with your test account's password
 ```
 
-**Never commit `.env`.** It's gitignored by default — confirm it stays that way; it will hold a real password.
+**Never commit `.env`.** It's gitignored by default — confirm it stays that way; once you've filled in the placeholders above, it holds a real password.
 
 Note the trailing slash on `API_BASE_URL` — required for correct URL resolution against the API clients' relative paths.
 
-**Getting a `TEST_USER_EMAIL` / `TEST_USER_PASSWORD`.** `env.testUser` must be a real, already-registered account on automationexercise.com — the suite only logs in with it (UI login, API `verifyLogin`), it never signs one up automatically. To get one:
-1. Go to automationexercise.com and use **Signup / Login** to register a new account. This is a public practice site with no real payment or personal data involved, so a dedicated test-only account is expected and normal — don't reuse a real personal password here. This is a one-time setup step: the same account is reused indefinitely, including for the checkout flow's shared session (see [`reporting/docs/architecture.md`](reporting/docs/architecture.md) for why that's safe).
-2. Put that account's email/password into your local `.env` only. `.env` is gitignored — it never gets committed, and the values never belong in code, docs, commit messages, or chat.
+**Getting a `TEST_USER_EMAIL` / `TEST_USER_PASSWORD`.** `env.testUser` must be a real, already-registered account on [automationexercise.com](https://automationexercise.com) — the suite only logs in with it (UI login, API `verifyLogin`), it never signs one up automatically:
+
+- Go to [automationexercise.com](https://automationexercise.com) and use **Signup / Login** to register a new account.
+- This is a public practice site with no real payment or personal data involved, so a dedicated test-only account is expected and normal — don't reuse a real personal password here.
+- This is a one-time setup step: the same account is reused indefinitely, including for the checkout flow's shared session (see [`reporting/docs/architecture.md`](reporting/docs/architecture.md) for why that's safe).
+- Replace the `{{TestUsername}}` / `{{ReplaceThisWithRealPassword}}` placeholders in your local `.env` with that account's real email/password — never in code, docs, commit messages, or chat.
+- `.env` is gitignored — it never gets committed.
 
 `config/globalSetup.ts` logs in with this account once before the suite runs and **aborts the whole run if that login fails** — so a wrong/missing password fails every test, not just the login ones. See [Troubleshooting](#troubleshooting) if that happens.
 
@@ -64,7 +67,7 @@ npm run report:archive       # copy the current reports to reports-archive/<date
 - **Everything looks broken immediately after cloning (editor errors, the Playwright test extension failing to list tests).** Expected — `config/env.ts` fails fast at import time if `.env` doesn't exist yet. Create it first (see [Getting Started](#getting-started)) and this clears.
 - **Every test fails immediately, at setup.** Almost always a missing/wrong test account — see [Getting Started](#getting-started). `globalSetup.ts` aborts the whole run if it can't log in.
 - **`report:allure:single` fails locally.** Needs a local JDK (Java 8+) — `java -version` to confirm. CI is unaffected.
-- **Tests time out or fail intermittently, but pass on retry.** Expected — automationexercise.com is a free public demo site with no SLA, and this repo already accounts for it (longer timeouts, retries). Full reasoning and evidence: [`reporting/docs/architecture.md`](reporting/docs/architecture.md).
+- **Tests time out or fail intermittently, but pass on retry.** Expected — [automationexercise.com](https://automationexercise.com) is a free public demo site with no SLA, and this repo already accounts for it (longer timeouts, retries). Full reasoning and evidence: [`reporting/docs/architecture.md`](reporting/docs/architecture.md).
 - **Run a subset instead of the full suite:**
   ```bash
   npx playwright test tests/ui/auth/login.spec.ts       # one file
@@ -106,19 +109,24 @@ ui-automation-framework/
 
 Tests are grouped by **feature**, not by type. Tests are tagged (`@smoke`, `@regression`) so subsets can be run independently. For how the codebase is organized and the reasoning behind it, see [`reporting/docs/architecture.md`](reporting/docs/architecture.md).
 
-## What's Covered
+## Approach
 
-**UI:**
-- Login — valid credentials, data-driven invalid credentials (Faker-generated, not committed), browser-validation edge case
-- Empty-field validation — login (email, password) and signup (name, email) each reject an empty required field client-side before any request is sent; kept separate from the credential-value tests
-- Products — Excel-driven search, add to cart
-- Cart — add/verify price, remove/verify gone, quantity carries through correctly from product detail page (JSON-driven)
-- Checkout — full add-to-cart → address review → order comment → card payment → confirmation flow, starting from a cached `storageState` for the shared test user (see [`reporting/docs/architecture.md`](reporting/docs/architecture.md))
-- Newsletter subscription — home page and cart page, both using a shared `FooterComponent` (Faker-generated emails)
+The scenarios automated here are less important than the patterns behind them — this table points at *how* things are structured, since that's what's meant to carry over to a real project:
 
-**API:**
-- Products — list, search
-- Account — login verification (valid/invalid), duplicate-email rejection (a real documented AutomationExercise test case), wrong-HTTP-method rejection (discovered via exploratory testing, not assumed), and a full **Create → Read → Update → Read → Delete** lifecycle that verifies each write actually persisted by reading it back, not just trusting the response code
+| Pattern | Where to look |
+|---|---|
+| Data-driven tests using runtime-generated fake data (not committed) | `tests/ui/auth/login.spec.ts` (invalid credentials), `tests/ui/newsletter/newsletter.spec.ts` (Faker-generated emails via the shared `FooterComponent`) |
+| Data-driven tests using an Excel source | `utils/excelData.ts` + `tests/ui/products/productsSearch.spec.ts` (reads `data/productSearchTerms.xlsx`) |
+| Data-driven tests using committed JSON fixtures | `tests/ui/cart/productQuantity.spec.ts` (`data/productQuantities.json`), `tests/api/auth.spec.ts` (`data/accountProfiles.json`) |
+| One authenticated session shared across a whole suite (global sign-in) | `config/globalSetup.ts` — logs in once and caches `storageState`, reused by `tests/ui/checkout/checkout.spec.ts` (see [`reporting/docs/architecture.md`](reporting/docs/architecture.md) for why that's safe here) |
+| Shared/base page objects and components | `pages/BasePage.ts` (extended by every page object), `pages/FooterComponent.ts` (one component reused by two different pages' newsletter forms) |
+| Shared/base API clients | `api/BaseApiClient.ts` (extended by `AccountApiClient` and `ProductsApiClient`) |
+| Lifecycle tests that verify a write actually persisted, not just that the response code looked right | `tests/api/auth.spec.ts` — Create → Read → Update → Read → Delete |
+| Consistent, automatic step reporting across every page-object/API-client method | `utils/step.ts` (the `@step` decorator), applied throughout `pages/` and `api/` |
+| Tagging strategy for running subsets (`@smoke`, `@regression`) | applied across `tests/`, wired to `npm run test:smoke` / `npm run test:regression` |
+| Allure/Monocart labelling (epic/feature/story/severity/layer) kept in one place instead of repeated per test | `utils/allureTags.ts`, called once per `test.describe` |
+
+For scenario-level coverage against AutomationExercise's own documented test cases (what's automated, what's a gap, by risk), run `npm run report:gaps` — backed by the hand-kept `reporting/data/featureInventory.json`.
 
 ## Reporting
 
@@ -131,6 +139,8 @@ Tests are grouped by **feature**, not by type. Tests are tagged (`@smoke`, `@reg
 | **Teams failure alert** | Push notification, only fires on failure. | Posted to the connected Teams chat |
 
 Allure single-file and Monocart are both kept deliberately, not narrowed to one — each has strengths the other doesn't. See each report's own file above for the full rationale and where its data comes from.
+
+**Haven't run the suite yet and want to see what these look like?** See [`reporting/report-examples/`](reporting/report-examples/) for a static example of each, from one full run.
 
 ## Future Considerations
 

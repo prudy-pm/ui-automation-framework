@@ -50,7 +50,8 @@ export default defineConfig({
         outputFile: 'monocart-report/index.html',
         zip: true,
         trend: './monocart-report/index.json',
-        visitor: (data, metadata) => {
+        // monocart-reporter types visitor/columns data as `any` in its own d.ts -- no stronger type exists to import.
+        visitor: (data: any, metadata: any) => {
           // Mirrors the layer/epic/feature/story/severity annotations utils/allureTags.ts sets, so both reports agree.
           for (const item of metadata.annotations ?? []) {
             if (['epic', 'feature', 'story', 'severity', 'layer'].includes(item.type) && item.description) {
@@ -59,22 +60,24 @@ export default defineConfig({
           }
           // Drops Allure's internal "Attach Allure Metadata" noise -- not a real attachment a reader would want.
           if (data.attachments) {
-            data.attachments = data.attachments.filter((a) => a.contentType !== 'application/vnd.allure.message+json');
+            data.attachments = data.attachments.filter(
+              (a: any) => a.contentType !== 'application/vnd.allure.message+json',
+            );
           }
           if (data.subs) {
             data.subs = data.subs.filter(
-              (s) => !(s.stepType === 'test.attach' && s.title?.includes('Allure Metadata')),
+              (s: any) => !(s.stepType === 'test.attach' && s.title?.includes('Allure Metadata')),
             );
           }
         },
-        columns: (defaultColumns) => {
+        columns: (defaultColumns: any[]) => {
           // Must mutate in place -- Monocart discards this callback's return value.
           const drop = new Set(['expectedStatus', 'status', 'annotations']);
-          const kept = defaultColumns.filter((column) => !drop.has(column.id));
+          const kept = defaultColumns.filter((column: any) => !drop.has(column.id));
           defaultColumns.length = 0;
           defaultColumns.push(...kept);
 
-          const at = defaultColumns.findIndex((column) => column.id === 'duration');
+          const at = defaultColumns.findIndex((column: any) => column.id === 'duration');
           defaultColumns.splice(
             at,
             0,
