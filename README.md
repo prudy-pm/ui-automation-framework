@@ -50,13 +50,18 @@ npx playwright install
 ```
 
 Copy `.env.example` to `.env`:
+```bash
+cp .env.example .env
+```
+Then fill it in:
 ```
 BASE_URL=https://automationexercise.com
 API_BASE_URL=https://automationexercise.com/api/
 TEST_USER_EMAIL=
 TEST_USER_PASSWORD=
 ```
-`.env` is gitignored.
+
+**Never commit `.env`.** It's gitignored by default — confirm it stays that way; it will hold a real password.
 
 Note the trailing slash on `API_BASE_URL` — required for correct URL resolution against the API clients' relative paths.
 
@@ -68,6 +73,8 @@ Note the trailing slash on `API_BASE_URL` — required for correct URL resolutio
 No test ever deletes or mutates this account (confirmed: the one spec that reuses its email for `updateAccount` deliberately sends the wrong HTTP method to test a 405 rejection, not a real update) — the same account works indefinitely.
 
 `config/globalSetup.ts` logs in with this account once before the suite runs and **aborts the whole run if that login fails** — so a wrong/missing password fails every test, not just the login ones. If you see every test failing at setup, check `.env` first.
+
+**Note:** `config/env.ts` fails fast at import time if `.env` doesn't exist at all yet (not just if it has bad values) — this can show up as the Playwright test extension failing to list any tests immediately after a fresh clone, before you've created `.env`. Expected; create it first and this clears.
 
 **Allure reports require a local JDK (Java 8+).** Run `java -version` to confirm. If missing, install one (e.g. [Eclipse Temurin](https://adoptium.net)) — this only affects local report generation; CI is unaffected.
 

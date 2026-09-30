@@ -1,22 +1,35 @@
+# Node
+node_modules/
 
-# Claude Code (local worktrees/session state, not part of the codebase)
-.claude/
+# Environment / secrets
+.env
 
 # Playwright
-node_modules/
 /test-results/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
-.env
+
+# Reporting (Allure, Monocart, and this repo's own report scripts)
 allure-results/
-allure-report/
 allure-report-single/
 monocart-report/
 reports-archive/
 release-summary/
 
-playwright/.auth/
+# TypeScript
+dist/
 
+# Editors -- .vscode/ is not ignored: settings.json and extensions.json are committed deliberately
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code (local worktrees/session state, not part of the codebase)
+.claude/
+
+# Misc
 *.log

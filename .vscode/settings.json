@@ -1,0 +1,23 @@
+{
+  "files.exclude": {
+    "node_modules": true,
+    "test-results": true,
+    "playwright-report": true,
+    "allure-results": true,
+    "allure-report-single": true,
+    "monocart-report": true,
+    "reports-archive": true,
+    "release-summary": true
+  },
+  "search.exclude": {
+    "node_modules": true,
+    "test-results": true,
+    "playwright-report": true,
+    "allure-results": true,
+    "allure-report-single": true,
+    "monocart-report": true,
+    "reports-archive": true,
+    "release-summary": true,
+    "package-lock.json": true
+  }
+}

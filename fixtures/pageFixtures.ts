@@ -30,7 +30,6 @@ const AD_URL_PATTERNS = [
 ];
 
 export const test = base.extend<PageFixtures>({
- 
   page: async ({ page }, use) => {
     await page.route('**/*', (route) => {
       const url = route.request().url();
@@ -58,7 +57,7 @@ export const test = base.extend<PageFixtures>({
     await use(new FooterComponent(page));
   },
 
-   productDetailPage: async ({ page }, use) => {
+  productDetailPage: async ({ page }, use) => {
     await use(new ProductDetailPage(page));
   },
 
