@@ -1,3 +1,7 @@
+# This repo is hosted on Bitbucket, which doesn't read .github/workflows/ -- this file is inert there and
+# runs nothing. Kept anyway, deliberately, as a real, verified-working reference for anyone learning from this
+# repo: a genuine example of wiring Playwright + secrets + multi-report artifacts + a failure alert into CI,
+# not a hypothetical. It has run green on GitHub Actions (see git history) prior to living here as reference.
 name: Playwright Tests
 on:
   push:
