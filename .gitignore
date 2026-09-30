@@ -1,4 +1,3 @@
-
 # Playwright
 node_modules/
 /test-results/
@@ -8,12 +7,22 @@ node_modules/
 /playwright/.auth/
 .env
 allure-results/
-allure-report/
 allure-report-single/
 monocart-report/
 reports-archive/
 release-summary/
 
-playwright/.auth/
+# TypeScript
+dist/
+
+# Editors -- .vscode/ is not ignored: settings.json and extensions.json are committed deliberately
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code (local worktrees/session state, not part of the codebase)
+.claude/
 
 *.log

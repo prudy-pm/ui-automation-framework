@@ -18,13 +18,18 @@ npx playwright install
 ```
 
 Copy `.env.example` to `.env`:
+```bash
+cp .env.example .env
+```
+Then fill it in:
 ```
 BASE_URL=https://automationexercise.com
 API_BASE_URL=https://automationexercise.com/api/
 TEST_USER_EMAIL=
 TEST_USER_PASSWORD=
 ```
-`.env` is gitignored.
+
+**Never commit `.env`.** It's gitignored by default — confirm it stays that way; it will hold a real password.
 
 Note the trailing slash on `API_BASE_URL` — required for correct URL resolution against the API clients' relative paths.
 
@@ -56,6 +61,7 @@ npm run report:archive       # copy the current reports to reports-archive/<date
 
 ## Troubleshooting
 
+- **Everything looks broken immediately after cloning (editor errors, the Playwright test extension failing to list tests).** Expected — `config/env.ts` fails fast at import time if `.env` doesn't exist yet. Create it first (see [Getting Started](#getting-started)) and this clears.
 - **Every test fails immediately, at setup.** Almost always a missing/wrong test account — see [Getting Started](#getting-started). `globalSetup.ts` aborts the whole run if it can't log in.
 - **`report:allure:single` fails locally.** Needs a local JDK (Java 8+) — `java -version` to confirm. CI is unaffected.
 - **Tests time out or fail intermittently, but pass on retry.** Expected — automationexercise.com is a free public demo site with no SLA, and this repo already accounts for it (longer timeouts, retries). Full reasoning and evidence: [`reporting/docs/architecture.md`](reporting/docs/architecture.md).
