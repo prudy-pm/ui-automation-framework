@@ -52,7 +52,7 @@ export class CartPage extends BasePage {
   async clearCart(): Promise<void> {
     await this.goto();
     const rows = this.cartInfoContainer.locator('tbody tr');
-    while (await rows.count() > 0) {
+    while ((await rows.count()) > 0) {
       const row = rows.first();
       await this.click(row.locator('.cart_quantity_delete'));
       await row.waitFor({ state: 'detached' });

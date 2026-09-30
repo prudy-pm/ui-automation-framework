@@ -16,14 +16,17 @@ if (process.env.TEST_WORKER_INDEX === undefined) {
  * pointed, which browsers, and which version of this framework ran. */
 const git = (args: string): string => {
   try {
-    return execSync(`git ${args}`, { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+    return execSync(`git ${args}`, { stdio: ['ignore', 'pipe', 'ignore'] })
+      .toString()
+      .trim();
   } catch {
     return '';
   }
 };
 const buildInfo = {
   'Base URL': env.baseUrl,
-  'Framework commit': (git('rev-parse --short HEAD') || 'unknown') + (git('status --porcelain') ? ' (uncommitted changes)' : ''),
+  'Framework commit':
+    (git('rev-parse --short HEAD') || 'unknown') + (git('status --porcelain') ? ' (uncommitted changes)' : ''),
   'Configured browsers': 'chromium, firefox, webkit', // keep in sync with `projects` below; a filtered run may use fewer
   'Run type': process.env.CI ? 'CI' : 'local',
 };
@@ -76,77 +79,84 @@ export default defineConfig({
      * confirmed via source (lib/index.js) that trends are read before the
      * output dir is cleaned, so this accumulates across runs without a
      * carry-forward script (unlike Allure's history/ folder). */
-    ['monocart-reporter', {
-      name: 'UI Automation Framework Report',
-      outputFile: 'monocart-report/index.html',
-      zip: true,
-      trend: './monocart-report/index.json',
-      /* Copies the layer/epic/feature/story/severity annotations set by
-       * utils/allureTags.ts onto each test row, shown as columns below.
-       * Monocart has no epic()/feature()/story() API of its own like
-       * Allure -- this is how the two reports end up agreeing. Also drops
-       * the "Allure Metadata (metadata)" attachment(s) -- an internal
-       * message allure-playwright sends itself via Playwright's own
-       * attachment mechanism (contentType
-       * application/vnd.allure.message+json, confirmed by inspecting a
-       * real report's data), not a real attachment a reader would want to
-       * open. Filtered by contentType, not the display name Monocart
-       * derives from it, since that's more likely to stay stable.
-       *
-       * That filter only clears the case-level Attachments *column* --
-       * every Allure API call (layer/epic/feature/story/severity, all called
-       * inside tagAllure()'s beforeEach) also shows up as its own *step*
-       * ("Attach \"Allure Metadata (metadata)\"", stepType: 'test.attach'),
-       * nested under Before Hooks -> beforeEach hook, confirmed by
-       * inspecting a real report's step tree. Steps don't carry
-       * contentType (Monocart deliberately doesn't expose it there), so
-       * this filters by stepType + title instead. Runs bottom-up (a
-       * step's own subs are already built by the time its visitor call
-       * happens, confirmed via Monocart's source), so filtering data.subs
-       * here cleans every level on the way up to Before/After Hooks. */
-      visitor: (data, metadata) => {
-        for (const item of metadata.annotations ?? []) {
-          if (['epic', 'feature', 'story', 'severity', 'layer'].includes(item.type) && item.description) {
-            data[item.type] = item.description;
+    [
+      'monocart-reporter',
+      {
+        name: 'UI Automation Framework Report',
+        outputFile: 'monocart-report/index.html',
+        zip: true,
+        trend: './monocart-report/index.json',
+        /* Copies the layer/epic/feature/story/severity annotations set by
+         * utils/allureTags.ts onto each test row, shown as columns below.
+         * Monocart has no epic()/feature()/story() API of its own like
+         * Allure -- this is how the two reports end up agreeing. Also drops
+         * the "Allure Metadata (metadata)" attachment(s) -- an internal
+         * message allure-playwright sends itself via Playwright's own
+         * attachment mechanism (contentType
+         * application/vnd.allure.message+json, confirmed by inspecting a
+         * real report's data), not a real attachment a reader would want to
+         * open. Filtered by contentType, not the display name Monocart
+         * derives from it, since that's more likely to stay stable.
+         *
+         * That filter only clears the case-level Attachments *column* --
+         * every Allure API call (layer/epic/feature/story/severity, all called
+         * inside tagAllure()'s beforeEach) also shows up as its own *step*
+         * ("Attach \"Allure Metadata (metadata)\"", stepType: 'test.attach'),
+         * nested under Before Hooks -> beforeEach hook, confirmed by
+         * inspecting a real report's step tree. Steps don't carry
+         * contentType (Monocart deliberately doesn't expose it there), so
+         * this filters by stepType + title instead. Runs bottom-up (a
+         * step's own subs are already built by the time its visitor call
+         * happens, confirmed via Monocart's source), so filtering data.subs
+         * here cleans every level on the way up to Before/After Hooks. */
+        visitor: (data, metadata) => {
+          for (const item of metadata.annotations ?? []) {
+            if (['epic', 'feature', 'story', 'severity', 'layer'].includes(item.type) && item.description) {
+              data[item.type] = item.description;
+            }
           }
-        }
-        if (data.attachments) {
-          data.attachments = data.attachments.filter((a) => a.contentType !== 'application/vnd.allure.message+json');
-        }
-        if (data.subs) {
-          data.subs = data.subs.filter((s) => !(s.stepType === 'test.attach' && s.title?.includes('Allure Metadata')));
-        }
-      },
-      columns: (defaultColumns) => {
-        /* expectedStatus is always "passed" here (no test.fail()/fixme() in
-         * this suite -- confirmed), so it never carries information.
-         * status duplicates outcome on every passing row and adds little
-         * on a failing one; outcome (expected/unexpected/flaky/skipped) is
-         * kept as the searchable/sortable text version of the caseType
-         * icon. annotations is now redundant with the layer/epic/feature/
-         * story/severity columns added below.
-         * Must mutate defaultColumns in place -- confirmed via source
-         * (lib/visitor.js) that this handler's return value is discarded. */
-        const drop = new Set(['expectedStatus', 'status', 'annotations']);
-        const kept = defaultColumns.filter((column) => !drop.has(column.id));
-        defaultColumns.length = 0;
-        defaultColumns.push(...kept);
+          if (data.attachments) {
+            data.attachments = data.attachments.filter((a) => a.contentType !== 'application/vnd.allure.message+json');
+          }
+          if (data.subs) {
+            data.subs = data.subs.filter(
+              (s) => !(s.stepType === 'test.attach' && s.title?.includes('Allure Metadata')),
+            );
+          }
+        },
+        columns: (defaultColumns) => {
+          /* expectedStatus is always "passed" here (no test.fail()/fixme() in
+           * this suite -- confirmed), so it never carries information.
+           * status duplicates outcome on every passing row and adds little
+           * on a failing one; outcome (expected/unexpected/flaky/skipped) is
+           * kept as the searchable/sortable text version of the caseType
+           * icon. annotations is now redundant with the layer/epic/feature/
+           * story/severity columns added below.
+           * Must mutate defaultColumns in place -- confirmed via source
+           * (lib/visitor.js) that this handler's return value is discarded. */
+          const drop = new Set(['expectedStatus', 'status', 'annotations']);
+          const kept = defaultColumns.filter((column) => !drop.has(column.id));
+          defaultColumns.length = 0;
+          defaultColumns.push(...kept);
 
-        const at = defaultColumns.findIndex((column) => column.id === 'duration');
-        defaultColumns.splice(at, 0,
-          { id: 'layer', name: 'Layer', width: 70, searchable: true, sortable: true },
-          { id: 'epic', name: 'Epic', width: 100, searchable: true, sortable: true },
-          { id: 'feature', name: 'Feature', width: 110, searchable: true, sortable: true },
-          { id: 'story', name: 'Story', width: 150, searchable: true, sortable: true },
-          { id: 'severity', name: 'Severity', width: 80, searchable: true, sortable: true },
-        );
+          const at = defaultColumns.findIndex((column) => column.id === 'duration');
+          defaultColumns.splice(
+            at,
+            0,
+            { id: 'layer', name: 'Layer', width: 70, searchable: true, sortable: true },
+            { id: 'epic', name: 'Epic', width: 100, searchable: true, sortable: true },
+            { id: 'feature', name: 'Feature', width: 110, searchable: true, sortable: true },
+            { id: 'story', name: 'Story', width: 150, searchable: true, sortable: true },
+            { id: 'severity', name: 'Severity', width: 80, searchable: true, sortable: true },
+          );
+        },
+        tags: {
+          smoke: { background: '#0B7A3D' },
+          regression: { background: '#0B5FA3' },
+          demo: { background: '#B36B00' },
+        },
       },
-      tags: {
-        smoke: { background: '#0B7A3D' },
-        regression: { background: '#0B5FA3' },
-        demo: { background: '#B36B00' },
-      },
-    }],
+    ],
   ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {

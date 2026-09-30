@@ -33,7 +33,7 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 30
-          
+
       # Allure is generated as ONE self-contained index.html (attachments embedded), so it opens by
       # double-click from a downloaded artifact -- no server or `allure open` needed. It carries no trend graphs;
       # trend lives in the release summary (see README).

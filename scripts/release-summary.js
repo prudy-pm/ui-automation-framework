@@ -17,9 +17,12 @@ const rootDir = path.resolve(__dirname, '..');
 const report = JSON.parse(fs.readFileSync(path.join(rootDir, 'monocart-report', 'index.json'), 'utf8'));
 const inventory = JSON.parse(fs.readFileSync(path.join(rootDir, 'data', 'featureInventory.json'), 'utf8'));
 
+// eslint-disable-next-line no-control-regex -- \u001b is deliberate: stripping real ANSI colour codes.
 const stripAnsi = (text) => String(text).replace(/\u001b\[[0-9;]*m/g, '');
-const escapeHtml = (text) => String(text).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const seconds = (ms) => (ms >= 60000 ? `${Math.floor(ms / 60000)}m ${Math.round((ms % 60000) / 1000)}s` : `${Math.round(ms / 1000)}s`);
+const escapeHtml = (text) =>
+  String(text).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const seconds = (ms) =>
+  ms >= 60000 ? `${Math.floor(ms / 60000)}m ${Math.round((ms % 60000) / 1000)}s` : `${Math.round(ms / 1000)}s`;
 
 // ---- flatten Monocart's suite tree into one record per browser run --------
 const runs = [];
@@ -36,7 +39,9 @@ const runs = [];
         smoke: (row.tags || []).includes('@smoke'),
         feature: row.feature || 'Untagged',
         severity: row.severity || 'unknown',
-        error: stripAnsi((row.errors || [])[0] || '').split('\n')[0].slice(0, 160),
+        error: stripAnsi((row.errors || [])[0] || '')
+          .split('\n')[0]
+          .slice(0, 160),
       });
     }
     if (row.subs) walk(row.subs, inProject);
@@ -52,7 +57,12 @@ const scenarios = new Map();
 for (const [key, group] of runsByScenario) {
   const outcome = worst.find((o) => group.some((run) => run.outcome === o));
   const affected = group.filter((run) => run.outcome === outcome);
-  scenarios.set(key, { ...group[0], outcome, browsers: affected.map((run) => run.browser), error: affected.find((run) => run.error)?.error || '' });
+  scenarios.set(key, {
+    ...group[0],
+    outcome,
+    browsers: affected.map((run) => run.browser),
+    error: affected.find((run) => run.error)?.error || '',
+  });
 }
 const scenarioList = [...scenarios.values()];
 const count = (list, outcome) => list.filter((item) => item.outcome === outcome).length;
@@ -70,9 +80,24 @@ const totalRuns = runs.length;
 const partial = totalRuns < largest * 0.9;
 
 let verdict;
-if (smokeFailed.length) verdict = { level: 'fail', text: 'CRITICAL PATH FAILING', detail: `${smokeFailed.length} of ${smoke.length} critical-path scenarios failed. Do not release until resolved.` };
-else if (smokeFlaky.length) verdict = { level: 'warn', text: 'CRITICAL PATH PASSING, WITH RETRIES', detail: `${smokeFlaky.length} critical-path scenario(s) only passed on retry. Treat as a warning.` };
-else verdict = { level: 'pass', text: 'CRITICAL PATH PASSING', detail: `All ${smoke.length} critical-path scenarios passed.` };
+if (smokeFailed.length)
+  verdict = {
+    level: 'fail',
+    text: 'CRITICAL PATH FAILING',
+    detail: `${smokeFailed.length} of ${smoke.length} critical-path scenarios failed. Do not release until resolved.`,
+  };
+else if (smokeFlaky.length)
+  verdict = {
+    level: 'warn',
+    text: 'CRITICAL PATH PASSING, WITH RETRIES',
+    detail: `${smokeFlaky.length} critical-path scenario(s) only passed on retry. Treat as a warning.`,
+  };
+else
+  verdict = {
+    level: 'pass',
+    text: 'CRITICAL PATH PASSING',
+    detail: `All ${smoke.length} critical-path scenarios passed.`,
+  };
 
 // ---- trend: only compare like with like (same number of browser runs) ----
 const comparable = pastRuns.filter((t) => t.tests === totalRuns).slice(-6);
@@ -92,13 +117,25 @@ for (const s of scenarioList) {
 // ---- coverage gaps (hand-kept inventory) -----------------------------------
 const gapCounts = (layer) => {
   const items = inventory.filter((i) => i.layer === layer);
-  return { total: items.length, full: items.filter((i) => i.coverage === 'full').length, partial: items.filter((i) => i.coverage === 'partial').length };
+  return {
+    total: items.length,
+    full: items.filter((i) => i.coverage === 'full').length,
+    partial: items.filter((i) => i.coverage === 'partial').length,
+  };
 };
 const highGaps = inventory.filter((i) => i.risk === 'high' && i.coverage !== 'full');
 
 // ---- render ----------------------------------------------------------------
-const table = (head, rows) => `<table><thead><tr>${head.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
-const failureRows = (list) => list.map((s) => [escapeHtml(s.title), escapeHtml(s.feature), escapeHtml(s.severity), escapeHtml([...new Set(s.browsers)].join(', ')), escapeHtml(s.error || '')]);
+const table = (head, rows) =>
+  `<table><thead><tr>${head.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+const failureRows = (list) =>
+  list.map((s) => [
+    escapeHtml(s.title),
+    escapeHtml(s.feature),
+    escapeHtml(s.severity),
+    escapeHtml([...new Set(s.browsers)].join(', ')),
+    escapeHtml(s.error || ''),
+  ]);
 const meta = Object.entries(report.metadata || {}).filter(([k]) => k !== 'actualWorkers');
 
 const html = `<!doctype html>
@@ -136,30 +173,70 @@ ${partial ? `<div class="note"><b>Partial run.</b> Only ${totalRuns} browser run
 </div>
 
 <h2>Failures</h2>
-${smokeFailed.length + otherFailed.length
-  ? table(['Scenario', 'Feature', 'Severity', 'Browsers', 'Error'], failureRows([...smokeFailed, ...otherFailed]))
-  : '<p class="small">No failures in this run.</p>'}
+${
+  smokeFailed.length + otherFailed.length
+    ? table(['Scenario', 'Feature', 'Severity', 'Browsers', 'Error'], failureRows([...smokeFailed, ...otherFailed]))
+    : '<p class="small">No failures in this run.</p>'
+}
 
 <h2>Flaky (needed a retry)</h2>
-${count(scenarioList, 'flaky')
-  ? table(['Scenario', 'Feature', 'Severity', 'Browsers', 'Error'], failureRows(scenarioList.filter((s) => s.outcome === 'flaky')))
-  : '<p class="small">None.</p>'}
+${
+  count(scenarioList, 'flaky')
+    ? table(
+        ['Scenario', 'Feature', 'Severity', 'Browsers', 'Error'],
+        failureRows(scenarioList.filter((s) => s.outcome === 'flaky')),
+      )
+    : '<p class="small">None.</p>'
+}
 
 <h2>Coverage of this run, by feature</h2>
-<div class="scroll">${table(['Feature', 'Scenarios', 'Passed', 'Failed', 'Flaky'], Object.entries(byFeature).sort().map(([name, f]) => [escapeHtml(name), f.scenarios, f.passed, f.failed, f.flaky]))}</div>
+<div class="scroll">${table(
+  ['Feature', 'Scenarios', 'Passed', 'Failed', 'Flaky'],
+  Object.entries(byFeature)
+    .sort()
+    .map(([name, f]) => [escapeHtml(name), f.scenarios, f.passed, f.failed, f.flaky]),
+)}</div>
 
 <h2>What is not automated</h2>
 <p class="small">From the site's documented cases (data/featureInventory.json, kept by hand): UI ${gapCounts('ui').full} of ${gapCounts('ui').total} fully automated (${gapCounts('ui').partial} partial); API ${gapCounts('api').full} of ${gapCounts('api').total} (${gapCounts('api').partial} partial).</p>
-${highGaps.length ? table(['Case', 'Layer', 'Coverage', 'Note'], highGaps.map((g) => [escapeHtml(`${g.id} ${g.title}`), g.layer.toUpperCase(), g.coverage, escapeHtml(g.note || '')])) : ''}
+${
+  highGaps.length
+    ? table(
+        ['Case', 'Layer', 'Coverage', 'Note'],
+        highGaps.map((g) => [
+          escapeHtml(`${g.id} ${g.title}`),
+          g.layer.toUpperCase(),
+          g.coverage,
+          escapeHtml(g.note || ''),
+        ]),
+      )
+    : ''
+}
 <p class="small">High-risk gaps shown; run <code>npm run report:gaps</code> for the full list.</p>
 
 <h2>Trend</h2>
 <p class="small">${escapeHtml(trendLine)}</p>
-${comparable.length ? table(['Run', 'Passed', 'Failed', 'Flaky', 'Duration'], comparable.map((t) => [new Date(t.date).toLocaleString('en-ZA'), t.passed, t.failed, t.flaky, seconds(t.duration)])) : ''}
+${
+  comparable.length
+    ? table(
+        ['Run', 'Passed', 'Failed', 'Flaky', 'Duration'],
+        comparable.map((t) => [
+          new Date(t.date).toLocaleString('en-ZA'),
+          t.passed,
+          t.failed,
+          t.flaky,
+          seconds(t.duration),
+        ]),
+      )
+    : ''
+}
 <p class="small">Only earlier runs with the same number of browser runs are compared.</p>
 
 <h2>What was tested</h2>
-${table(['Item', 'Value'], meta.map(([k, v]) => [escapeHtml(k), escapeHtml(v)]))}
+${table(
+  ['Item', 'Value'],
+  meta.map(([k, v]) => [escapeHtml(k), escapeHtml(v)]),
+)}
 <p class="small">The application under test is a third-party site with no version number to report. @demo tests (intentional failures) are excluded.</p>
 </main></body></html>
 `;
@@ -169,5 +246,7 @@ fs.mkdirSync(outDir, { recursive: true });
 fs.writeFileSync(path.join(outDir, 'index.html'), html);
 
 console.log(`${verdict.text}: ${verdict.detail}`);
-console.log(`${scenarioList.length} scenarios / ${totalRuns} browser runs -- ${count(scenarioList, 'failed')} failed, ${count(scenarioList, 'flaky')} flaky${partial ? ' (PARTIAL RUN)' : ''}`);
+console.log(
+  `${scenarioList.length} scenarios / ${totalRuns} browser runs -- ${count(scenarioList, 'failed')} failed, ${count(scenarioList, 'flaky')} flaky${partial ? ' (PARTIAL RUN)' : ''}`,
+);
 console.log(`Written to ${path.join('release-summary', 'index.html')}`);
