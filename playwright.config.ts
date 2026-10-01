@@ -69,6 +69,10 @@ export default defineConfig({
               (s: any) => !(s.stepType === 'test.attach' && s.title?.includes('Allure Metadata')),
             );
           }
+          // Monocart keeps raw "Fill <value>" action steps (Allure's detail: false drops them) -- mask so real credentials never land in the report.
+          if (data.type === 'step' && data.title?.startsWith('Fill "')) {
+            data.title = data.title.replace(/^Fill "[\s\S]*" (?=locator\(|getBy)/, 'Fill "***" ');
+          }
         },
         columns: (defaultColumns: any[]) => {
           // Must mutate in place -- Monocart discards this callback's return value.
