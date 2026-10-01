@@ -30,6 +30,8 @@ export class ProductsPage extends BasePage {
   async searchProduct(name: string): Promise<void> {
     await this.fill(this.searchInput, name);
     await this.click(this.searchButton);
+    // Full page load; results render before the footer's cart.js binds "Add to cart", so wait for the new DOM.
+    await this.page.waitForURL(/[?&]search=/, { waitUntil: 'domcontentloaded' });
   }
 
   @step
@@ -64,5 +66,7 @@ export class ProductsPage extends BasePage {
   @step
   async viewProductAt(index: number): Promise<void> {
     await this.click(this.viewProductLinks.nth(index));
+    // Same as searchProduct: wait until the detail page's scripts have bound its "Add to cart" button.
+    await this.page.waitForURL(/\/product_details\//, { waitUntil: 'domcontentloaded' });
   }
 }
