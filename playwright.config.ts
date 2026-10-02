@@ -42,7 +42,8 @@ export default defineConfig({
   reporter: [
     ['html'],
     ['@estruyf/github-actions-reporter'],
-    ['allure-playwright', { resultsDir: 'allure-results', environmentInfo: buildInfo, detail: false }],
+    // A copy: in CI Playwright adds ci/gitCommit/actualWorkers to config.metadata (same object), which Allure shows as blank rows.
+    ['allure-playwright', { resultsDir: 'allure-results', environmentInfo: { ...buildInfo }, detail: false }],
     [
       'monocart-reporter',
       {
