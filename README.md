@@ -36,13 +36,13 @@ Note the trailing slash on `API_BASE_URL` — required for correct URL resolutio
 
 - Go to [automationexercise.com](https://automationexercise.com) and use **Signup / Login** to register a new account.
 - This is a public practice site with no real payment or personal data involved, so a dedicated test-only account is expected and normal — don't reuse a real personal password here.
-- This is a one-time setup step: the same account is reused indefinitely, including for the checkout flow's shared session (see [`reporting/docs/architecture.md`](reporting/docs/architecture.md) for why that's safe).
+- This is a one-time setup step: the same account is reused indefinitely, including for the checkout flow's shared session (see [`ARCHITECTURE.md`](ARCHITECTURE.md) for why that's safe).
 - Replace the `{{TestUsername}}` / `{{ReplaceThisWithRealPassword}}` placeholders in your local `.env` with that account's real email/password — never in code, docs, commit messages, or chat.
 - `.env` is gitignored — it never gets committed.
 
 `config/globalSetup.ts` logs in with this account once before the suite runs and **aborts the whole run if that login fails** — so a wrong/missing password fails every test, not just the login ones. See [Troubleshooting](#troubleshooting) if that happens.
 
-Want to run this in a pipeline? See [`reporting/docs/architecture.md`](reporting/docs/architecture.md) for the required secrets.
+Want to run this in a pipeline? See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the required secrets.
 
 **Allure reports require a local JDK (Java 8+).** Run `java -version` to confirm. If missing, install one (e.g. [Eclipse Temurin](https://adoptium.net)) — this only affects local report generation; CI is unaffected.
 
@@ -68,7 +68,7 @@ npm run report:scan-secrets  # fail if any .env secret appears in any report -- 
 - **Everything looks broken immediately after cloning (editor errors, the Playwright test extension failing to list tests).** Expected — `config/env.ts` fails fast at import time if `.env` doesn't exist yet. Create it first (see [Getting Started](#getting-started)) and this clears.
 - **Every test fails immediately, at setup.** Almost always a missing/wrong test account — see [Getting Started](#getting-started). `globalSetup.ts` aborts the whole run if it can't log in.
 - **`report:allure:single` fails locally.** Needs a local JDK (Java 8+) — `java -version` to confirm. CI is unaffected.
-- **Tests time out or fail intermittently, but pass on retry.** Expected — [automationexercise.com](https://automationexercise.com) is a free public demo site with no SLA, and this repo already accounts for it (longer timeouts, retries). Full reasoning and evidence: [`reporting/docs/architecture.md`](reporting/docs/architecture.md).
+- **Tests time out or fail intermittently, but pass on retry.** Expected — [automationexercise.com](https://automationexercise.com) is a free public demo site with no SLA, and this repo already accounts for it (longer timeouts, retries). Full reasoning and evidence: [`ARCHITECTURE.md`](ARCHITECTURE.md).
 - **Run a subset instead of the full suite:**
   ```bash
   npx playwright test tests/ui/auth/login.spec.ts       # one file
@@ -100,15 +100,17 @@ ui-automation-framework/
 ├── config/              # env.ts, authFile.ts, globalSetup.ts
 ├── utils/               # faker wrappers, excelData, accountFactory, allureTags.ts, step.ts
 ├── reporting/           # everything specific to Allure/Monocart reporting
-│   ├── docs/            # allure.md, monocart.md, architecture.md
-│   ├── scripts/         # release-summary.js, coverage-gaps.js, archive-reports.js
-│   └── data/            # featureInventory.json -- hand-kept coverage list
+│   ├── docs/            # allure.md, monocart.md
+│   ├── scripts/         # release-summary.js, coverage-gaps.js, archive-reports.js, scan-secrets.js
+│   ├── data/            # featureInventory.json -- hand-kept coverage list
+│   └── report-examples/ # a committed Allure + Monocart report from one CI run
+├── ARCHITECTURE.md      # why the codebase is built the way it is
 ├── .env.example         # template for your local .env (see Getting Started)
 ├── tsconfig.json        # @pages/@fixtures/@config/@data/@utils/@api aliases
 └── playwright.config.ts # chromium/firefox/webkit; checkout is chromium-only
 ```
 
-Tests are grouped by **feature**, not by type. Tests are tagged (`@smoke`, `@regression`) so subsets can be run independently. For how the codebase is organized and the reasoning behind it, see [`reporting/docs/architecture.md`](reporting/docs/architecture.md).
+Tests are grouped by **feature**, not by type. Tests are tagged (`@smoke`, `@regression`) so subsets can be run independently. For how the codebase is organized and the reasoning behind it, see [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
 ## Approach
 
@@ -119,7 +121,7 @@ The scenarios automated here are less important than the patterns behind them �
 | Data-driven tests using runtime-generated fake data (not committed) | `tests/ui/auth/login.spec.ts` (invalid credentials), `tests/ui/newsletter/newsletter.spec.ts` (Faker-generated emails via the shared `FooterComponent`) |
 | Data-driven tests using an Excel source | `utils/excelData.ts` + `tests/ui/products/productsSearch.spec.ts` (reads `data/productSearchTerms.xlsx`) |
 | Data-driven tests using committed JSON fixtures | `tests/ui/cart/productQuantity.spec.ts` (`data/productQuantities.json`), `tests/api/auth.spec.ts` (`data/accountProfiles.json`) |
-| One authenticated session shared across a whole suite (global sign-in) | `config/globalSetup.ts` — logs in once and caches `storageState`, reused by `tests/ui/checkout/checkout.spec.ts` (see [`reporting/docs/architecture.md`](reporting/docs/architecture.md) for why that's safe here) |
+| One authenticated session shared across a whole suite (global sign-in) | `config/globalSetup.ts` — logs in once and caches `storageState`, reused by `tests/ui/checkout/checkout.spec.ts` (see [`ARCHITECTURE.md`](ARCHITECTURE.md) for why that's safe here) |
 | Shared/base page objects and components | `pages/BasePage.ts` (extended by every page object), `pages/FooterComponent.ts` (one component reused by two different pages' newsletter forms) |
 | Shared/base API clients | `api/BaseApiClient.ts` (extended by `AccountApiClient` and `ProductsApiClient`) |
 | Lifecycle tests that verify a write actually persisted, not just that the response code looked right | `tests/api/auth.spec.ts` — Create → Read → Update → Read → Delete |

@@ -1,7 +1,7 @@
 # Architecture and design decisions
 
 Why the codebase is organized the way it is, and the reasoning behind a few choices a reader would otherwise
-have to reverse-engineer. See [`../../README.md`](../../README.md) for what to do; this file is the why.
+have to reverse-engineer. See [`README.md`](README.md) for what to do; this file is the why.
 
 ## How it's built
 
@@ -69,6 +69,14 @@ curl -sS -o /dev/null -w "ttfb: %{time_starttransfer}s\n" https://automationexer
 them over** — they exist because of this specific site. None of this fixes a genuine connection reset
 (`ERR_CONNECTION_RESET`, distinct from a timeout) — only a retry does, which is why
 `retries: process.env.CI ? 2 : 1` exists independently of the values above.
+
+## Reporting tools considered
+
+**ExtentReports was evaluated and not adopted.** It was suggested in review, but it belongs to the Java/TestNG
+and Selenium ecosystem: there is no maintained Playwright integration, so using it would mean writing and
+maintaining a custom reporter. Allure covers the same need — step-level detail, a shareable single-file report —
+with an adapter built for Playwright, so it was used instead (alongside Monocart; see
+[`reporting/docs/allure.md`](reporting/docs/allure.md) and [`reporting/docs/monocart.md`](reporting/docs/monocart.md)).
 
 ## Running this in a pipeline
 
