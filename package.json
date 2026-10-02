@@ -14,7 +14,8 @@
     "report:monocart": "npx monocart show-report monocart-report/index.html",
     "report:gaps": "node reporting/scripts/coverage-gaps.js",
     "report:summary": "node reporting/scripts/release-summary.js",
-    "report:archive": "node reporting/scripts/archive-reports.js"
+    "report:archive": "node reporting/scripts/archive-reports.js",
+    "report:scan-secrets": "node reporting/scripts/scan-secrets.js"
   },
   "keywords": [],
   "author": "",

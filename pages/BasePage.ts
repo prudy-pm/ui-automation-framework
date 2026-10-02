@@ -31,6 +31,18 @@ export class BasePage {
     await locator.fill(value);
   }
 
+  // For real credentials: fill() records 'Fill "<value>"' in every report, evaluate() records only "Evaluate".
+  // Traces still capture the value -- specs using this must also set test.use({ trace: 'off' }).
+  @step
+  async fillSecret(locator: Locator, value: string): Promise<void> {
+    await locator.waitFor({ state: 'visible' });
+    await locator.evaluate((el: HTMLInputElement, secret: string) => {
+      el.value = secret;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    }, value);
+  }
+
   @step
   async getText(locator: Locator): Promise<string> {
     await locator.waitFor({ state: 'visible' });

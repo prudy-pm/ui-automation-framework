@@ -29,40 +29,46 @@ jobs:
         run: npx playwright install --with-deps
       - name: Run Playwright tests
         run: npx playwright test
-      - name: Upload HTML report
-        uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
-        with:
-          name: playwright-report
-          path: playwright-report/
-          retention-days: 30
-
       # Allure is generated as ONE self-contained index.html (attachments embedded), so it opens by
       # double-click from a downloaded artifact -- no server or `allure open` needed. It carries no trend graphs;
       # trend lives in the release summary (see README).
       - name: Generate Allure single-file report
         if: ${{ !cancelled() }}
         run: npx allure generate allure-results --single-file --clean -o allure-report-single
+      - name: Generate release summary
+        if: ${{ !cancelled() }}
+        run: npm run report:summary
+
+      # Every upload below is gated on this: nothing leaves the runner if a secret value appears in any report.
+      - name: Scan reports for secrets
+        id: secret-scan
+        if: ${{ !cancelled() }}
+        run: npm run report:scan-secrets
+
+      - name: Upload HTML report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() && steps.secret-scan.outcome == 'success' }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
       - name: Upload Allure single-file report
         uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.secret-scan.outcome == 'success' }}
         with:
           name: allure-report
           path: allure-report-single/
           retention-days: 30
       - name: Upload Monocart report
         uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.secret-scan.outcome == 'success' }}
         with:
           name: monocart-report
           path: monocart-report/index.zip
           retention-days: 30
-      - name: Generate release summary
-        if: ${{ !cancelled() }}
-        run: npm run report:summary
       - name: Upload release summary
         uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.secret-scan.outcome == 'success' }}
         with:
           name: release-summary
           path: release-summary/

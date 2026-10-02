@@ -60,6 +60,7 @@ npm run report:monocart      # open the Monocart report
 npm run report:summary       # one-page release-readiness summary of the last run
 npm run report:gaps          # what is / is not automated, vs the site's documented cases
 npm run report:archive       # copy the current reports to reports-archive/<date>/
+npm run report:scan-secrets  # fail if any .env secret appears in any report -- run before sharing one
 ```
 
 ## Troubleshooting
@@ -140,6 +141,19 @@ For scenario-level coverage against AutomationExercise's own documented test cas
 
 Allure single-file and Monocart are both kept deliberately, not narrowed to one — each has strengths the other doesn't. See each report's own file above for the full rationale and where its data comes from.
 
+### Keeping secrets out of reports
+
+Playwright records every action with its arguments, so a plain `fill(password)` puts the password into the HTML
+and Monocart reports, and traces capture it in request bodies and DOM snapshots. Two layers stop that here:
+
+- **At the source** — real credentials are typed with `BasePage.fillSecret()` (recorded as `Evaluate`, not
+  `Fill "<value>"`), and any spec that uses them sets `test.use({ trace: 'off' })` (`login.spec.ts`, `api/auth.spec.ts`).
+- **Safety net** — `npm run report:scan-secrets` searches every report output (inside zips, embedded base64 and
+  compressed data) for the value of every secret-looking key in `.env.example`. CI runs it before uploading
+  anything; if it fails, no artifact is uploaded. A new secret key in `.env.example` is covered automatically.
+
+Adding a test that uses a real secret? Use `fillSecret`, turn trace off for that spec, and run the scan.
+
 **Haven't run the suite yet and want to see what these look like?** See [`reporting/report-examples/`](reporting/report-examples/) for a static example of each, from one full run.
 
 ## Future Considerations
@@ -148,4 +162,4 @@ Things this repo deliberately hasn't done, given its current context and scale �
 
 - **CI-side Allure trend history** — not implemented; would need downloading the previous run's artifact before each report generation.
 - **Currents (hosted test dashboard)** — evaluated, not adopted: no free tier justifies the cost at this project's scale.
-- **Credentials** currently live in `.env` locally and CI/repo secrets — no vault or rotation strategy considered at this project's scale.
+- **Credentials** currently live in `.env` locally and CI/repo secrets — no vault or automated rotation at this project's scale. Rotate the test account's password manually if it is ever exposed.
