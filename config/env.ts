@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 
 // quiet: true -- dotenv v17+ otherwise prints a random unsolicited promo "tip" (dotenvx.com, vestauth.com)
-// on every run, including CI logs. Confirmed via dotenv's own source: gated by exactly this option.
+// on every run, including CI logs; dotenv's own source gates that tip on exactly this option.
 dotenv.config({ path: path.resolve(__dirname, '../.env'), quiet: true });
 
 function required(key: string): string {

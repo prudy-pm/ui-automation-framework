@@ -36,7 +36,7 @@ test.use({ storageState: AUTH_FILE });
 
 **Why checkout runs on chromium only.** Reusing one account's session means reusing that account's
 server-side cart — running the *same* checkout test concurrently across multiple browser projects against
-one cart is a real, previously-found source of race-condition bugs. `firefox`/`webkit` both set `testIgnore`
+one cart makes the runs corrupt each other's cart contents and totals. `firefox`/`webkit` both set `testIgnore`
 on `tests/ui/checkout/`, so only one instance of that test ever touches the cart at a time, regardless of
 worker count. `checkout.spec.ts` still calls `cartPage.clearCart()` as its first step, since the shared cart
 carries over between runs.
@@ -48,18 +48,18 @@ rejection, not a real update.
 ## Timeouts and the target site
 
 Three of Playwright's defaults are overridden, and all three exist because of this specific target site, not
-as a general-purpose upgrade — automationexercise.com is a free public demo site with no SLA. Confirmed with
-a plain `curl -w`, not assumed:
+as a general-purpose upgrade — automationexercise.com is a free public demo site with no SLA. Its response
+time can be measured with:
 
 ```bash
 curl -sS -o /dev/null -w "ttfb: %{time_starttransfer}s\n" https://automationexercise.com/products
 # regularly shows 10+ seconds
 ```
 
-- **`timeout: 45_000`** (default 30s) — a single test previously included the slow time-to-first-byte inside
-  its overall budget, plus everything after. Genuinely too tight for this target.
-- **`expect.timeout: 10_000`** (default 5s) — an AJAX-driven "Add to cart" modal missed the 5s default while
-  the origin was slow — the assertion was correct, the server just hadn't responded.
+- **`timeout: 45_000`** (default 30s) — a test's budget has to absorb the slow time-to-first-byte plus
+  everything after it; 30s is too tight for this site.
+- **`expect.timeout: 10_000`** (default 5s) — the AJAX-driven "Add to cart" modal can take longer than 5s to
+  appear when the site is slow, even though nothing is wrong.
 - **`BasePage.goto()` uses `waitUntil: 'domcontentloaded'`**, not Playwright's default `'load'` — `'load'`
   additionally blocks on every image, font, and third-party ad iframe finishing, none of which any test ever
   touches. Locator actions (`click`/`fill`) still auto-wait for their own target regardless, so this loses no
@@ -70,13 +70,13 @@ them over** — they exist because of this specific site. None of this fixes a g
 (`ERR_CONNECTION_RESET`, distinct from a timeout) — only a retry does, which is why
 `retries: process.env.CI ? 2 : 1` exists independently of the values above.
 
-## Reporting tools considered
+## Other reporting tools
 
-**ExtentReports was evaluated and not adopted.** It was suggested in review, but it belongs to the Java/TestNG
-and Selenium ecosystem: there is no maintained Playwright integration, so using it would mean writing and
-maintaining a custom reporter. Allure covers the same need — step-level detail, a shareable single-file report —
-with an adapter built for Playwright, so it was used instead (alongside Monocart; see
-[`reporting/docs/allure.md`](reporting/docs/allure.md) and [`reporting/docs/monocart.md`](reporting/docs/monocart.md)).
+**ExtentReports** is an HTML reporting library from the Java/TestNG and Selenium ecosystem. It has no maintained
+Playwright integration, so on a Playwright/TypeScript project like this one it would mean writing and maintaining
+a custom reporter. Allure and Monocart cover the same need — step-level detail in a shareable report — with
+reporters built for Playwright (see [`reporting/docs/allure.md`](reporting/docs/allure.md) and
+[`reporting/docs/monocart.md`](reporting/docs/monocart.md)).
 
 ## Running this in a pipeline
 

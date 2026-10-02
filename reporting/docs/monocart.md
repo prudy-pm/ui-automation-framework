@@ -1,7 +1,7 @@
 # Monocart report — how it's configured here
 
-Kept alongside Allure single-file deliberately (see [`../../README.md#reporting`](../../README.md#reporting)) —
-this file documents Monocart's own setup so it doesn't get lost inside `playwright.config.ts` comments.
+Used alongside Allure single-file (see [`../../README.md#reporting`](../../README.md#reporting)) — this file
+documents Monocart's own setup so it doesn't get lost inside `playwright.config.ts` comments.
 
 ## Configuration
 
@@ -14,7 +14,7 @@ In `playwright.config.ts`:
   zip: true,
   trend: './monocart-report/index.json',
   visitor: (data, metadata) => { /* copies layer/epic/feature/story/severity annotations onto each row;
-                                     drops the internal "Allure Metadata" attachment */ },
+                                     drops the internal "Allure Metadata" attachment; masks Fill values */ },
   columns: (defaultColumns) => { /* drops expectedStatus/status/annotations; inserts
                                      Layer, Epic, Feature, Story, Severity columns before Duration */ },
   tags: { smoke: {...}, regression: {...} }, // colours the title tags in the grid
@@ -22,31 +22,29 @@ In `playwright.config.ts`:
 ```
 
 - **`zip: true`** — bundles the HTML, its JSON data, and every attachment (screenshots, trace files) into one
-  `monocart-report/index.zip`. Confirmed by inspection to be a genuine single-file artifact — safe to email or
-  drop in a chat, unlike the folder-based Allure report this project used to also generate (see
-  `reporting/docs/allure.md`).
-- **`trend: './monocart-report/index.json'`** — self-references this run's own previous `index.json`. Confirmed
-  via Monocart's source (`lib/index.js`) that trend data is read *before* the output directory is cleaned, so
-  this accumulates across local runs with no carry-forward script needed (unlike Allure's `history/` folder,
-  which is exactly why Allure needed one and Monocart doesn't).
+  `monocart-report/index.zip` — a single file that can be emailed or dropped in a chat.
+- **`trend: './monocart-report/index.json'`** — points at this report's own previous `index.json`. Monocart reads
+  it before cleaning the output folder (`lib/index.js`), so the trend accumulates across local runs with no
+  extra script. It only persists on a machine that keeps that file between runs — a fresh CI checkout starts
+  with no trend.
 - **`visitor`** — Monocart has no `epic()`/`feature()`/`story()` runtime API like Allure. Instead it reads
   Playwright's own `test.info().annotations`. `utils/allureTags.ts`'s `tagAllure()` pushes
   `layer`/`epic`/`feature`/`story`/`severity` as annotations (in addition to calling Allure's own API), and this
   `visitor` function copies those annotations onto each row's `data`, which the `columns` function below then
-  displays. It also strips the "Allure Metadata (metadata)" attachment(s) allure-playwright sends itself via
-  Playwright's own attachment mechanism (`contentType: 'application/vnd.allure.message+json'`, confirmed by
-  inspecting a real report's data) -- internal bookkeeping, not something a reader would ever want to open. That
-  only clears the case-level Attachments *column*; every Allure API call also shows up as its own *step*
-  ("Attach \"Allure Metadata (metadata)\"", nested under Before Hooks → beforeEach hook), which the visitor
-  separately filters out of `data.subs` (steps don't carry `contentType`, so this one is matched by
-  `stepType: 'test.attach'` + title instead).
-- **`columns`** — drops three of Monocart's default columns, confirmed dead weight by inspecting real report
-  data: **expectedStatus** (constant `'passed'` on every row in this suite -- nothing uses `test.fail()` or
-  `test.fixme()`), **status** (duplicates **outcome** on every passing row), and **annotations** (superseded by
-  the columns below). Inserts **Layer**, **Epic**, **Feature**, **Story** and **Severity** as searchable, sortable
-  grid columns (before the built-in Duration column), populated from what `visitor` copied in. Must mutate the
-  `defaultColumns` array in place -- confirmed via Monocart's source (`lib/visitor.js`) that this handler's
-  return value is discarded.
+  displays. It also:
+  - strips the "Allure Metadata (metadata)" attachment allure-playwright sends through Playwright's attachment
+    mechanism (`contentType: 'application/vnd.allure.message+json'`) — internal bookkeeping, not something a
+    reader would open — and the matching "Attach \"Allure Metadata (metadata)\"" step (matched by
+    `stepType: 'test.attach'` + title, since steps don't carry `contentType`);
+  - masks the value in every `Fill "<value>"` step title as `Fill "***"`. Monocart keeps raw Playwright action
+    steps (Allure's `detail: false` drops them), so without this a typed value would appear in the report. See
+    "Keeping secrets out of reports" in the README for the full approach.
+- **`columns`** — drops three default columns that carry no information in this suite: **expectedStatus**
+  (always `'passed'` — nothing uses `test.fail()` or `test.fixme()`), **status** (duplicates **outcome** on
+  every passing row), and **annotations** (superseded by the columns below). Inserts **Layer**, **Epic**,
+  **Feature**, **Story** and **Severity** as searchable, sortable grid columns (before the built-in Duration
+  column), populated from what `visitor` copied in. Monocart discards this handler's return value
+  (`lib/visitor.js`), so it mutates `defaultColumns` in place.
 - **`metadata`** (top-level `playwright.config.ts` option, not inside the reporter block) — Monocart's own
   "which build was tested" surface: reads the same `buildInfo` object (base URL, framework commit, configured
   browsers, run type) shown on the report as key/value pairs.
@@ -60,7 +58,7 @@ npm run report:monocart
 
 Starts a small local server (`http://localhost:8090`) and opens the report. That URL only works on this
 machine while the server runs — to share the report itself, send `monocart-report/index.zip` (unzip and open
-`index.html`; some features like trace viewing may need serving, not confirmed cross-machine).
+`index.html`; some features, like trace viewing, may need the report to be served rather than opened from disk).
 
 ## What feeds Monocart's content
 
@@ -79,14 +77,15 @@ machine while the server runs — to share the report itself, send `monocart-rep
 
 `reporting/scripts/release-summary.js` reads `monocart-report/index.json` directly (not Allure's results) to build
 `release-summary/index.html` — the scenario/browser-run counts, the flaky and failure tables, the per-feature
-coverage table, and the trend section (comparing only against earlier runs with the same number of browser
+coverage table, and the trend section (comparing only against previous runs with the same number of browser
 runs, using Monocart's own `trends` array from the same file) all come from here. See
 [`../scripts/release-summary.js`](../scripts/release-summary.js).
 
 ## Where it's generated in CI
 
 `.github/workflows/playwright.yml` runs the normal `npx playwright test` step (Monocart writes its own output
-as a reporter, same as Allure), then uploads `monocart-report/index.zip` as the `monocart-report` artifact.
+as a reporter, same as Allure), then uploads `monocart-report/index.zip` as the `monocart-report` artifact (only
+if the secret scan passes).
 
 ## Known limitations, as configured here
 
@@ -94,5 +93,5 @@ as a reporter, same as Allure), then uploads `monocart-report/index.zip` as the 
   columns instead).
 - No description or bug-link fields (Allure-only, via `describeTest()`/`linkIssue()` — Monocart has no
   equivalent API, only what a `visitor` can pull from annotations, and description/issue-link text isn't
-  currently pushed as annotations).
+  pushed as annotations).
 - Fixture/hook step noise is not hidden (Allure's `detail: false` has no Monocart equivalent).

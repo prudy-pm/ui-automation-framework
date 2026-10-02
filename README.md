@@ -141,7 +141,7 @@ For scenario-level coverage against AutomationExercise's own documented test cas
 | **Release summary** | One page answering "is this build safe to release?": critical-path (`@smoke`) verdict, real failures, flaky tests, coverage by feature, gaps, and trend against earlier runs of the same size. | `npm run report:summary` → `release-summary/index.html`; downloadable CI artifact |
 | **Teams failure alert** | Push notification, only fires on failure. | Posted to the connected Teams chat |
 
-Allure single-file and Monocart are both kept deliberately, not narrowed to one — each has strengths the other doesn't. See each report's own file above for the full rationale and where its data comes from.
+Allure single-file and Monocart are used together because each has strengths the other doesn't — Allure: the Behaviors tree, descriptions and bug links; Monocart: a sortable, searchable grid and a trend across local runs. See each report's own file above for how it's configured and where its data comes from.
 
 ### Keeping secrets out of reports
 
@@ -162,12 +162,12 @@ Adding a test that uses a real secret? Use `fillSecret`, call `clearSubmittedSec
 trace off for that spec, and run the scan. Known gap: failure screenshots are images the scan can't read — a
 password field shows dots, but a visible email address is legible.
 
-**Haven't run the suite yet and want to see what these look like?** See [`reporting/report-examples/`](reporting/report-examples/) for a static example of each, from one full run.
+**Haven't run the suite yet and want to see what these look like?** See [`reporting/report-examples/`](reporting/report-examples/) for a static example of each, from one full CI run.
 
 ## Future Considerations
 
-Things this repo deliberately hasn't done, given its current context and scale — not a backlog, just an honest record of what wasn't justified here:
+Not included at this project's scale, and what adding each would take:
 
-- **CI-side Allure trend history** — not implemented; would need downloading the previous run's artifact before each report generation.
-- **Currents (hosted test dashboard)** — evaluated, not adopted: no free tier justifies the cost at this project's scale.
+- **Trend history in CI** — the trend (release summary, Monocart) only persists on a machine that keeps the previous run's data; CI starts fresh every run, so it would need the previous run's artifact downloaded before reports are generated.
+- **Currents (hosted test dashboard)** — a paid service with no free tier; the cost isn't justified at this project's scale.
 - **Credentials** currently live in `.env` locally and CI/repo secrets — no vault or automated rotation at this project's scale. Rotate the test account's password manually if it is ever exposed.
