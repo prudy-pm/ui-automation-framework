@@ -97,26 +97,50 @@ function tryDecompress(buf) {
   return null;
 }
 
-// Returns the secret keys found in buf, looking through zips, base64 runs and compressed data.
-function scan(buf, depth = 0) {
-  const found = new Set(needles.filter((n) => buf.includes(n.bytes)).map((n) => n.key));
-  if (depth >= MAX_DEPTH) return found;
+// Surrounding text with every secret form masked, so a leak can be traced to its source without re-exposing it.
+// The slice is widened by the longest needle first, so no secret straddling the window edge survives unmasked.
+const CONTEXT = 40;
+const longestNeedle = Math.max(...needles.map((n) => n.bytes.length));
+function maskedContext(buf, at, length) {
+  let text = buf
+    .subarray(Math.max(0, at - CONTEXT - longestNeedle), at + length + CONTEXT + longestNeedle)
+    .toString('latin1');
+  for (const n of [...needles].sort((a, b) => b.bytes.length - a.bytes.length)) {
+    text = text.split(n.bytes.toString('latin1')).join('***');
+  }
+  const marker = text.indexOf('***');
+  return text
+    .slice(Math.max(0, marker - CONTEXT), marker + 3 + CONTEXT)
+    .replace(/[^\x20-\x7e]/g, '.')
+    .replace(/\s+/g, ' ');
+}
+
+// Returns { key, where, context } for each secret found in buf, looking through zips, base64 runs and
+// compressed data. `where` is the path inside the file, e.g. "base64 > report.json".
+function scan(buf, depth = 0, where = []) {
+  const hits = needles
+    .map((n) => ({ n, at: buf.indexOf(n.bytes) }))
+    .filter(({ at }) => at !== -1)
+    .map(({ n, at }) => ({ key: n.key, where: where.join(' > '), context: maskedContext(buf, at, n.bytes.length) }));
+  if (depth >= MAX_DEPTH) return hits;
   const nested = [];
 
-  if (buf.length >= 4 && buf.readUInt32LE(0) === 0x04034b50) nested.push(...unzipEntries(buf).map((e) => e.data));
+  if (buf.length >= 4 && buf.readUInt32LE(0) === 0x04034b50) {
+    nested.push(...unzipEntries(buf).map((e) => ({ data: e.data, label: e.name })));
+  }
   const decompressed = tryDecompress(buf);
-  if (decompressed) nested.push(decompressed);
+  if (decompressed) nested.push({ data: decompressed, label: 'compressed' });
 
   const text = buf.toString('latin1');
   for (const match of text.matchAll(/[A-Za-z0-9+/]{200,}={0,2}/g)) {
     const decoded = Buffer.from(match[0], 'base64');
-    nested.push(decoded);
+    nested.push({ data: decoded, label: 'base64' });
     const inner = tryDecompress(decoded);
-    if (inner) nested.push(inner);
+    if (inner) nested.push({ data: inner, label: 'base64 > compressed' });
   }
 
-  for (const child of nested) for (const key of scan(child, depth + 1)) found.add(key);
-  return found;
+  for (const child of nested) hits.push(...scan(child.data, depth + 1, [...where, child.label]));
+  return hits;
 }
 
 const walk = (target) =>
@@ -137,8 +161,14 @@ if (!files.length) {
 
 let leaks = 0;
 for (const file of files) {
-  for (const key of scan(fs.readFileSync(file))) {
-    console.error(`LEAK: ${key} found in ${path.relative(rootDir, file)}`);
+  // One line per secret per file (its first location) -- enough to trace the source without flooding the log.
+  const seen = new Set();
+  for (const hit of scan(fs.readFileSync(file))) {
+    if (seen.has(hit.key)) continue;
+    seen.add(hit.key);
+    const where = hit.where ? ` > ${hit.where}` : '';
+    console.error(`LEAK: ${hit.key} found in ${path.relative(rootDir, file)}${where}`);
+    console.error(`      context: ...${hit.context}...`);
     leaks++;
   }
 }

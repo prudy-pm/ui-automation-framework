@@ -144,15 +144,21 @@ Allure single-file and Monocart are both kept deliberately, not narrowed to one 
 ### Keeping secrets out of reports
 
 Playwright records every action with its arguments, so a plain `fill(password)` puts the password into the HTML
-and Monocart reports, and traces capture it in request bodies and DOM snapshots. Two layers stop that here:
+and Monocart reports; traces capture it in request bodies and DOM snapshots; and a failed test's page snapshot
+(`error-context.md`) prints every input's value — password fields included. Two layers stop that here:
 
 - **At the source** — real credentials are typed with `BasePage.fillSecret()` (recorded as `Evaluate`, not
   `Fill "<value>"`), and any spec that uses them sets `test.use({ trace: 'off' })` (`login.spec.ts`, `api/auth.spec.ts`).
+  `fillSecret` fields are blanked right after a valid form is submitted (`clearSubmittedSecrets()`) and again
+  after any failed test (`fixtures/pageFixtures.ts`), so the failure snapshot never sees them.
 - **Safety net** — `npm run report:scan-secrets` searches every report output (inside zips, embedded base64 and
   compressed data) for the value of every secret-looking key in `.env.example`. CI runs it before uploading
   anything; if it fails, no artifact is uploaded. A new secret key in `.env.example` is covered automatically.
+  Each finding shows where in the file it is and the surrounding text, with the secret masked.
 
-Adding a test that uses a real secret? Use `fillSecret`, turn trace off for that spec, and run the scan.
+Adding a test that uses a real secret? Use `fillSecret`, call `clearSubmittedSecrets()` after submitting, turn
+trace off for that spec, and run the scan. Known gap: failure screenshots are images the scan can't read — a
+password field shows dots, but a visible email address is legible.
 
 **Haven't run the suite yet and want to see what these look like?** See [`reporting/report-examples/`](reporting/report-examples/) for a static example of each, from one full run.
 

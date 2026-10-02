@@ -33,14 +33,31 @@ export class BasePage {
 
   // For real credentials: fill() records 'Fill "<value>"' in every report, evaluate() records only "Evaluate".
   // Traces still capture the value -- specs using this must also set test.use({ trace: 'off' }).
+  // data-secret lets pageFixtures clear the field before a failed test's page snapshot (which prints input values).
   @step
   async fillSecret(locator: Locator, value: string): Promise<void> {
     await locator.waitFor({ state: 'visible' });
     await locator.evaluate((el: HTMLInputElement, secret: string) => {
+      el.setAttribute('data-secret', '');
       el.value = secret;
       el.dispatchEvent(new Event('input', { bubbles: true }));
       el.dispatchEvent(new Event('change', { bubbles: true }));
     }, value);
+  }
+
+  // Call right after submitting: if the click doesn't navigate (swallowed by the site's JS, or not registered), the
+  // filled form stays on screen for a failing assertion's page snapshot. Browser-blocked (invalid) forms are left
+  // untouched so validation tests still see what was typed.
+  @step
+  async clearSubmittedSecrets(): Promise<void> {
+    await this.page
+      .evaluate(() => {
+        // Decide validity before clearing anything -- blanking one required field would make the rest look invalid.
+        const fields = [...document.querySelectorAll<HTMLInputElement>('[data-secret]')];
+        const submitted = fields.filter((el) => el.form?.checkValidity());
+        submitted.forEach((el) => (el.value = ''));
+      })
+      .catch(() => {}); // the page may already be navigating away -- nothing left to clear
   }
 
   @step

@@ -30,7 +30,7 @@ const AD_URL_PATTERNS = [
 ];
 
 export const test = base.extend<PageFixtures>({
-  page: async ({ page }, use) => {
+  page: async ({ page }, use, testInfo) => {
     await page.route('**/*', (route) => {
       const url = route.request().url();
       if (AD_URL_PATTERNS.some((pattern) => pattern.test(url))) {
@@ -39,6 +39,14 @@ export const test = base.extend<PageFixtures>({
       return route.continue();
     });
     await use(page);
+    // On failure Playwright snapshots the page into the report, input values included -- blank fillSecret fields first.
+    // Capped at 2s: a page stuck mid-navigation must not turn a fast failure into a teardown timeout.
+    if (testInfo.status !== testInfo.expectedStatus) {
+      const clear = page
+        .evaluate(() => document.querySelectorAll<HTMLInputElement>('[data-secret]').forEach((el) => (el.value = '')))
+        .catch(() => {});
+      await Promise.race([clear, new Promise((resolve) => setTimeout(resolve, 2_000))]);
+    }
   },
 
   loginPage: async ({ page }, use) => {

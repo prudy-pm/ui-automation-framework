@@ -25,6 +25,7 @@ export class LoginPage extends BasePage {
     await this.fillSecret(this.emailInput, email);
     await this.fillSecret(this.passwordInput, password);
     await this.click(this.loginButton);
+    await this.clearSubmittedSecrets();
   }
 
   // Composed flow: go home, open login via nav, submit. Also used once by
