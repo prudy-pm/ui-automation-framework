@@ -6,6 +6,9 @@ import { toApiPayload } from '@utils/accountFactory';
 import accountProfiles from '@data/accountProfiles.json';
 import { AccountProfile } from '@data/types';
 
+// Trace off: verifyLogin sends the real password, and a retry's trace would record the request body.
+test.use({ trace: 'off' });
+
 test.describe('Account API', () => {
   tagAllure({ epic: 'Account', feature: 'Account API', story: 'Account management' });
 

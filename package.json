@@ -16,6 +16,7 @@
     "report:gaps": "node scripts/coverage-gaps.js",
     "report:summary": "node scripts/release-summary.js",
     "report:archive": "node scripts/archive-reports.js",
+    "report:scan-secrets": "node scripts/scan-secrets.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",

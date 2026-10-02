@@ -93,6 +93,7 @@ npm run report:summary       # one-page release-readiness summary of the last ru
 npm run report:gaps          # what is / is not automated, vs the site's documented cases
 npm run report:archive       # copy the current reports to reports-archive/<date>/
 npm run test:demo            # the intentional-failure demo tests (excluded from normal runs)
+npm run report:scan-secrets  # fail if any .env secret appears in any report -- run before sharing one
 ```
 
 ## What's Covered
@@ -169,6 +170,19 @@ The connection itself is fast; the origin server takes 10+ seconds just to start
 
 **Intentional failures.** `@demo` tests fail on purpose (to show how failures look). They are excluded from normal runs (`grepInvert` in `playwright.config.ts`), so they can't fake a red build; run them with `npm run test:demo`.
 
+### Keeping secrets out of reports
+
+Playwright records every action with its arguments, so a plain `fill(password)` puts the password into the HTML
+and Monocart reports, and traces capture it in request bodies and DOM snapshots. Two layers stop that here:
+
+- **At the source** — real credentials are typed with `BasePage.fillSecret()` (recorded as `Evaluate`, not
+  `Fill "<value>"`), and any spec that uses them sets `test.use({ trace: 'off' })` (`login.spec.ts`, `api/auth.spec.ts`).
+- **Safety net** — `npm run report:scan-secrets` searches every report output (inside zips, embedded base64 and
+  compressed data) for the value of every secret-looking key in `.env.example`. CI runs it before uploading
+  anything; if it fails, no artifact is uploaded. A new secret key in `.env.example` is covered automatically.
+
+Adding a test that uses a real secret? Use `fillSecret`, turn trace off for that spec, and run the scan.
+
 ## Design Decisions
 
 - **Page Object Model + API client pattern**, both extending shared base classes. Shared, cross-page UI elements (e.g. the footer) become their own **component**, not duplicated per page.
@@ -210,7 +224,7 @@ The connection itself is fast; the origin server takes 10+ seconds just to start
 - Trim primitive-level report steps — checked a real report's step tree (the checkout test): the composed page-object step names already read like a BDD narrative end to end (`Products: search and add first to cart` → `Cart: proceed to checkout` → `Payment: pay with card` → `OrderConfirmation: expect order confirmed`); the noise is one level deeper, where `BasePage`'s `click`/`fill`/`expectVisible` primitives (also wrapped by `@step`) show up as repeated generic entries with raw locators. Considered full BDD/Gherkin (SpecFlow/Cucumber-style feature files) as an alternative and ruled it out — the top-level step names already give that narrative, so a feature-file layer would mostly restate them for real duplication cost. The actual lever, if this becomes a priority, is whether the primitive-level steps need to be separate tree entries at all, vs. collapsed by default in how Allure/Monocart render them.
 - Currents (hosted dashboard) — ruled out for this repo specifically: no free tier as of its 2026 pricing revamp (cheapest plan $49/mo), not justifiable without a paying project behind it
 - GitHub Pages / Bitbucket static hosting / Bitbucket's native Tests tab, as report-delivery alternatives — all rejected: GitHub Pages doesn't survive the planned move off GitHub, Bitbucket's static hosting is always public regardless of repo privacy and capped at one site per workspace, and Bitbucket's Tests tab is Standard/Premium-plan-only and shows failures only
-- A real secrets vault, once there's a team and multiple environments
+- A real secrets vault, once there's a team and multiple environments (until then, rotate the test account's password manually if it is ever exposed)
 
 **Explicitly out of scope for this repo:** k6 load testing — deliberately excluded as it runs under a different tool/runtime and belongs in its own separate project, not bolted onto this one.
 

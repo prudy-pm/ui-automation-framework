@@ -19,10 +19,11 @@ export class LoginPage extends BasePage {
     await this.click(this.loginNavLink);
   }
 
+  // fillSecret, not fill: callers pass the real test-user credentials, which must never reach a report.
   @step
   async login(email: string, password: string): Promise<void> {
-    await this.fill(this.emailInput, email);
-    await this.fill(this.passwordInput, password);
+    await this.fillSecret(this.emailInput, email);
+    await this.fillSecret(this.passwordInput, password);
     await this.click(this.loginButton);
   }
 
