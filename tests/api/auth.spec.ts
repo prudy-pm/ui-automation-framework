@@ -20,7 +20,7 @@ test.describe('Account API', () => {
   });
 
   test('verifyLogin fails for invalid credentials @regression', async ({ accountApi }) => {
-    const response = await accountApi.verifyLogin('no.such.account@example.com', 'WrongPassword123!');
+    const response = await accountApi.verifyLogin('no.such.account@example.com', generateRandomPassword());
     const body = await response.json();
     expect(body.responseCode).toBe(404);
   });

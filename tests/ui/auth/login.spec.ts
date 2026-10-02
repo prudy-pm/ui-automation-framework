@@ -39,7 +39,7 @@ test.describe('Login', () => {
   });
 
   test('browser blocks malformed email format before submission @regression', async ({ loginPage }) => {
-    await loginPage.loginViaNav('not-a-valid-email', 'SomePassword123!');
+    await loginPage.loginViaNav('not-a-valid-email', generateRandomPassword());
     await loginPage.expectEmailFieldRejectedByBrowser();
   });
 });
