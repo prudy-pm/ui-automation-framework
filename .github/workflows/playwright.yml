@@ -4,7 +4,9 @@
 name: Playwright Tests
 on:
   push:
-    branches: [main, master]
+    # The handover branch is included so every push to it is verified -- it diverges from main on purpose, so a PR
+    # into main always conflicts and GitHub skips pull_request runs for conflicting PRs.
+    branches: [main, master, playwright-automation-with-typescript]
   pull_request:
     branches: [main, master]
 jobs:
